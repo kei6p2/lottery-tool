@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="くじ引き・抽選ツールで簡単・楽しく名前抽選！カスタムオプションでイベントを盛り上げよう！" />
+  <meta name="keywords" content="抽選ツール, ランダム抽選, 宝くじ, イベント抽選" />
+  <meta property="og:title" content="くじ引き・抽選ツール" />
+  <meta property="og:description" content="シンプルで楽しい名前抽選ツール！結果をシェアしてイベントを盛り上げよう！" />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://kei6p2.github.io/lottery-tool/" />
+  <meta property="og:image" content="https://kei6p2.github.io/lottery-tool/og-image.jpg" />
+  <title>くじ引き・抽選ツール</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
+  <script defer>
+    // 注意: このコードはHTTPS環境で動作する必要があります（navigator.share や navigator.clipboard を使用するため）。
+    // サーバー上でUTF-8エンコーディングを正しく設定してください（例: .htaccessでAddDefaultCharset UTF-8）。
+
+    // 祝福メッセージ
+    const defaultMessages = [
+      'おめでとう！素晴らしい運の持ち主！',
+      'やったね！当選おめでとう！',
+      'キミが主役だ！おめでとう！',
+      '運命の当選！おめでとう！'
+    ];
+
+    // Base64エンコード（URLセーフ）
+    function base64urlEncode(str) {
+      try {
+        return btoa(unescape(encodeURIComponent(str)))
+          .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+      } catch (e) {
+        console.error('Base64エンコードエラー:', e);
+        showModal('エンコード中にエラーが発生しました。');
+        return '';
+      }
+    }
+
+    // Base64デコード（URLセーフ）
+    function base64urlDecode(str) {
+      try {
+        str = str.replace(/-/g, '+').replace(/_/g, '/');
+        while (str.length % 4) str += '=';
+        return decodeURIComponent(escape(atob(str)));
+      } catch (e) {
+        console.error('Base64デコードエラー:', e);
+        return '';
+      }
+    }
+
+    function getParam(name) {
+      try {
+        const url = new URL(window.location.href);
+        return url.searchParams.get(name);
+      } catch (e) {
+        console.error('URLパラメータ取得エラー:', e);
+        return null;
+      }
+    }
+
+    function updateURL(dataStr) {
+      try {
+        if (window.location.protocol !== 'about:') {
+          const url = new URL(window.location.href);
+          url.searchParams.set('data', dataStr);
+          window.history.replaceState(null, '', url);
+        } else {
+          console.log('about:srcdoc 環境のため、URL更新をスキップ');
+        }
+      } catch (e) {
+        console.error('URL更新エラー:', e);
+        showModal('URLの更新に失敗しました。');
+      }
+    }
+
+    function showModal(message) {
+      const modal = document.getElementById('modal');
+      const modalMessage = document.getElementById('modalMessage');
+      modalMessage.textContent = message;
+      modal.style.display = 'flex';
+      modal.classList.add('modal-show');
+    }
+
+    function closeModal() {
+      const modal = document.getElementById('modal');
+      modal.classList.remove('modal-show');
+      setTimeout(() => {
+        modal.style.display = 'none';
+      }, 300);
+    }
+
+    function updateNameCount() {
+      const textarea = document.getElementById('nameInput');
+      const names = textarea.value.trim().split('\n').map(n => n.trim()).filter(Boolean);
+      document.getElementById('nameCount').textContent = `入力人数: ${names.length}人`;
+    }
+
+    function insertSampleNames() {
+      const textarea = document.getElementById('nameInput');
+      textarea.value = `ユーザー1\nユーザー2\nユーザー3\nユーザー4\nユーザー5`;
+      updateNameCount();
+    }
+
+    function setDrawCount(count) {
+      document.getElementById('drawCount').value = count;
+      startDraw();
+    }
+
+    function showDrawAnimation(names) {
+      const drawAnimation = document.getElementById('drawAnimation');
+      drawAnimation.style.display = 'block';
+      drawAnimation.classList.add('animate-pulse');
+      let interval = setInterval(() => {
+        const randomName = names[Math.floor(Math.random() * names.length)];
+        drawAnimation.textContent = `抽選中: ${randomName}`;
+      }, 100);
+      return () => {
+        clearInterval(interval);
+        drawAnimation.classList.remove('animate-pulse');
+        drawAnimation.style.display = 'none';
+        drawAnimation.textContent = '';
+      };
+    }
+
+    function showResult(winners, showRanking, customMessage) {
+      const resultDiv = document.getElementById('result');
+      const message = customMessage || defaultMessages[Math.floor(Math.random() * defaultMessages.length)];
+      resultDiv.innerHTML = `<div class="result-message">${message}</div>`;
+      winners.forEach((winner, index) => {
+        setTimeout(() => {
+          const winnerDiv = document.createElement('div');
+          winnerDiv.className = 'winner-item';
+          winnerDiv.textContent = showRanking ? `${index + 1}位: ${winner}` : `🎉 ${winner}`;
+          winnerDiv.style.animationDelay = `${index * 0.5}s`;
+          resultDiv.appendChild(winnerDiv);
+        }, index * 500);
+      });
+    }
+
+    function startDraw() {
+      console.log('startDraw 実行開始');
+      const textarea = document.getElementById('nameInput');
+      const inputCount = document.getElementById('drawCount');
+      const allowDuplicates = document.getElementById('allowDuplicates').checked;
+      const showRanking = document.getElementById('showRanking').checked;
+      const customMessage = document.getElementById('customMessage').value.trim();
+      const loadingBar = document.getElementById('loadingBar');
+      const loadingBarFill = document.getElementById('loadingBarFill');
+      const resultDiv = document.getElementById('result');
+      const copyBtn = document.getElementById('copyBtn');
+      const shareBtn = document.getElementById('shareBtn');
+      const exportBtn = document.getElementById('exportBtn');
+      const imageBtn = document.getElementById('imageBtn');
+
+      let rawNames = textarea.value.trim().split('\n').map(n => n.trim()).filter(Boolean);
+      console.log('入力された名前:', rawNames);
+
+      if (!allowDuplicates) {
+        rawNames = [...new Set(rawNames)];
+      }
+
+      const count = parseInt(inputCount.value);
+
+      if (rawNames.length === 0) {
+        showModal('名前を入力してください。');
+        return;
+      }
+      if (isNaN(count) || count < 1 || (!allowDuplicates && count > rawNames.length)) {
+        showModal('抽選人数は1以上、かつ名前の数以下にしてください（重複許可時は除く）。');
+        return;
+      }
+
+      resultDiv.textContent = '';
+      copyBtn.style.display = 'none';
+      shareBtn.style.display = 'none';
+      exportBtn.style.display = 'none';
+      imageBtn.style.display = 'none';
+      loadingBar.style.display = 'block';
+      loadingBarFill.style.animation = 'none';
+      void loadingBarFill.offsetWidth;
+      loadingBarFill.style.animation = 'loading 3s ease-in-out forwards';
+
+      const stopAnimation = showDrawAnimation(rawNames);
+
+      setTimeout(() => {
+        try {
+          stopAnimation();
+          let winners = [];
+          if (allowDuplicates) {
+            for (let i = 0; i < count; i++) {
+              const randomIndex = Math.floor(Math.random() * rawNames.length);
+              winners.push(rawNames[randomIndex]);
+            }
+          } else {
+            const shuffled = [...rawNames].sort(() => 0.5 - Math.random());
+            winners = shuffled.slice(0, count);
+          }
+
+          console.log('当選者:', winners);
+          loadingBar.style.display = 'none';
+          showResult(winners, showRanking, customMessage);
+
+          const dataStr = base64urlEncode(JSON.stringify(winners));
+          if (dataStr) {
+            updateURL(dataStr);
+          }
+
+          copyBtn.style.display = 'inline-block';
+          shareBtn.style.display = 'inline-block';
+          exportBtn.style.display = 'inline-block';
+          imageBtn.style.display = 'inline-block';
+        } catch (e) {
+          console.error('抽選処理エラー:', e);
+          showModal('抽選中にエラーが発生しました。もう一度お試しください。');
+          loadingBar.style.display = 'none';
+          stopAnimation();
+        }
+      }, 3000);
+    }
+
+    function resetForm() {
+      const textarea = document.getElementById('nameInput');
+      const inputCount = document.getElementById('drawCount');
+      const customMessage = document.getElementById('customMessage');
+      const resultDiv = document.getElementById('result');
+      const copyBtn = document.getElementById('copyBtn');
+      const shareBtn = document.getElementById('shareBtn');
+      const exportBtn = document.getElementById('exportBtn');
+      const imageBtn = document.getElementById('imageBtn');
+      textarea.value = '';
+      inputCount.value = '1';
+      customMessage.value = '';
+      document.getElementById('allowDuplicates').checked = false;
+      document.getElementById('showRanking').checked = false;
+      resultDiv.textContent = '';
+      copyBtn.style.display = 'none';
+      shareBtn.style.display = 'none';
+      exportBtn.style.display = 'none';
+      imageBtn.style.display = 'none';
+      try {
+        if (window.location.protocol !== 'about:') {
+          window.history.replaceState(null, '', window.location.pathname);
+        }
+      } catch (e) {
+        console.error('リセット時のURLクリアエラー:', e);
+      }
+      updateNameCount();
+    }
+
+    function copyURL() {
+      try {
+        const url = window.location.href;
+        navigator.clipboard.writeText(url).then(() => {
+          showModal('URLをコピーしました！');
+        }).catch(() => {
+          showModal('コピーに失敗しました。手動でコピーしてください。');
+        });
+      } catch (e) {
+        console.error('URLコピーエラー:', e);
+        showModal('URLのコピーに失敗しました。');
+      }
+    }
+
+    function shareResult() {
+      try {
+        const url = window.location.href;
+        const text = 'くじ引き・抽選ツールで抽選した結果をチェック！';
+        if (navigator.share) {
+          navigator.share({
+            title: 'くじ引き・抽選ツール',
+            text: text,
+            url: url
+          }).catch(() => showModal('シェアに失敗しました。'));
+        } else {
+          showModal('このブラウザではシェア機能が使えません。URLをコピーしてシェアしてください。');
+        }
+      } catch (e) {
+        console.error('シェアエラー:', e);
+        showModal('シェア中にエラーが発生しました。');
+      }
+    }
+
+    function exportResult() {
+      try {
+        const resultDiv = document.getElementById('result');
+        const customMessage = document.getElementById('customMessage').value.trim();
+        const winners = Array.from(resultDiv.querySelectorAll('.winner-item')).map(div => div.textContent.replace(/^\d+位: /, '').replace('🎉 ', ''));
+        if (winners.length === 0) {
+          showModal('エクスポートする結果がありません。');
+          return;
+        }
+        const fileName = customMessage ? `${customMessage.replace(/\s+/g, '_')}_${new Date().toISOString().replace(/[:.]/g, '-')}` : `lottery_result_${new Date().toISOString().replace(/[:.]/g, '-')}`;
+        const csvContent = 'data:text/csv;charset=utf-8,' + winners.map(w => `"${w}"`).join('\n');
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement('a');
+        link.setAttribute('href', encodedUri);
+        link.setAttribute('download', `${fileName}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } catch (e) {
+        console.error('CSVエクスポートエラー:', e);
+        showModal('CSVのエクスポートに失敗しました。');
+      }
+    }
+
+    function downloadImage() {
+      try {
+        const resultDiv = document.getElementById('result');
+        const customMessage = document.getElementById('customMessage').value.trim();
+        if (!resultDiv.querySelectorAll('.winner-item').length) {
+          showModal('画像を生成する結果がありません。');
+          return;
+        }
+        const fileName = customMessage ? `${customMessage.replace(/\s+/g, '_')}_${new Date().toISOString().replace(/[:.]/g, '-')}` : `lottery_result_${new Date().toISOString().replace(/[:.]/g, '-')}`;
+        html2canvas(resultDiv).then(canvas => {
+          const link = document.createElement('a');
+          link.href = canvas.toDataURL('image/png');
+          link.download = `${fileName}.png`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        }).catch(() => showModal('画像の生成に失敗しました。'));
+      } catch (e) {
+        console.error('画像生成エラー:', e);
+        showModal('画像の生成に失敗しました。');
+      }
+    }
+
+    // イベントリスナーの設定
+    function initializeEventListeners() {
+      console.log('イベントリスナー初期化開始');
+      document.getElementById('sampleBtn').addEventListener('click', insertSampleNames);
+      document.getElementById('startDrawBtn').addEventListener('click', startDraw);
+      document.getElementById('quickDraw1').addEventListener('click', () => setDrawCount(1));
+      document.getElementById('quickDraw2').addEventListener('click', () => setDrawCount(2));
+      document.getElementById('quickDraw3').addEventListener('click', () => setDrawCount(3));
+      document.getElementById('resetBtn').addEventListener('click', resetForm);
+      document.getElementById('copyBtn').addEventListener('click', copyURL);
+      document.getElementById('shareBtn').addEventListener('click', shareResult);
+      document.getElementById('exportBtn').addEventListener('click', exportResult);
+      document.getElementById('imageBtn').addEventListener('click', downloadImage);
+      document.getElementById('closeModalBtn').addEventListener('click', closeModal);
+      document.getElementById('nameInput').addEventListener('input', updateNameCount);
+      console.log('イベントリスナー初期化完了');
+    }
+
+    // ページ読み込み時に実行
+    window.onload = () => {
+      try {
+        console.log('ページ読み込み開始');
+        document.body.classList.add('loaded');
+        const dataStr = getParam('data');
+        const copyBtn = document.getElementById('copyBtn');
+        const shareBtn = document.getElementById('shareBtn');
+        const exportBtn = document.getElementById('exportBtn');
+        const imageBtn = document.getElementById('imageBtn');
+        if (dataStr) {
+          const decoded = base64urlDecode(dataStr);
+          if (decoded) {
+            const winners = JSON.parse(decoded);
+            if (Array.isArray(winners) && winners.length > 0) {
+              const showRanking = winners.some(w => /^\d+位: /.test(w));
+              showResult(winners, showRanking, '');
+              copyBtn.style.display = 'inline-block';
+              shareBtn.style.display = 'inline-block';
+              exportBtn.style.display = 'inline-block';
+              imageBtn.style.display = 'inline-block';
+            }
+          }
+        }
+        updateNameCount();
+        initializeEventListeners();
+        console.log('ページ読み込み完了');
+      } catch (e) {
+        console.error('ページ読み込みエラー:', e);
+        showModal('ページの初期化に失敗しました。');
+      }
+    };
+  </script>
+  <style>
+    body {
+      margin: 0;
+      padding: 2rem;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #f0f9ff, #cbebff);
+      color: #333;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      opacity: 0;
+      transition: opacity 0.5s ease-in;
+    }
+    body.loaded {
+      opacity: 1;
+    }
+    h1 {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      color: #007acc;
+      text-shadow: 0 0 10px rgba(0, 122, 204, 0.3);
+      animation: glow 2s ease-in-out infinite alternate;
+      transform: translateY(-20px);
+      opacity: 0;
+      animation: slideIn 0.5s ease-out forwards;
+    }
+    @keyframes slideIn {
+      to { transform: translateY(0); opacity: 1; }
+    }
+    @keyframes glow {
+      from { text-shadow: 0 0 10px rgba(0, 122, 204, 0.3); }
+      to { text-shadow: 0 0 20px rgba(0, 122, 204, 0.7); }
+    }
+    p {
+      font-size: 1.1rem;
+      color: #555;
+      margin-bottom: 1rem;
+      text-align: center;
+      max-width: 600px;
+      opacity: 0;
+      transform: translateY(20px);
+      animation: slideIn 0.5s ease-out 0.2s forwards;
+    }
+    #nameCount {
+      font-size: 1rem;
+      color: #007acc;
+      margin-bottom: 0.5rem;
+      opacity: 0;
+      animation: slideIn 0.5s ease-out 0.3s forwards;
+    }
+    textarea {
+      width: 90%;
+      max-width: 600px;
+      height: 150px;
+      padding: 1rem;
+      font-size: 1rem;
+      border: 2px solid #00aaff;
+      border-radius: 12px;
+      background-color: rgba(255, 255, 255, 0.95);
+      margin-bottom: 0.5rem;
+      resize: none;
+      transition: border-color 0.3s, transform 0.3s, box-shadow 0.3s;
+      opacity: 0;
+      animation: slideIn 0.5s ease-out 0.4s forwards;
+    }
+    textarea:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 170, 255, 0.2);
+    }
+    textarea:focus {
+      border-color: #007acc;
+      outline: none;
+      box-shadow: 0 0 8px rgba(0, 122, 204, 0.4);
+    }
+    input[type="number"], input[type="text"] {
+      width: 150px;
+      padding: 0.5rem;
+      font-size: 1rem;
+      margin: 0.5rem;
+      border: 2px solid #00aaff;
+      border-radius: 8px;
+      transition: border-color 0.3s, transform 0.3s, box-shadow 0.3s;
+      opacity: 0;
+      animation: slideIn 0.5s ease-out 0.5s forwards;
+    }
+    input[type="number"]:hover, input[type="text"]:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 170, 255, 0.2);
+    }
+    input[type="number"]:focus, input[type="text"]:focus {
+      border-color: #007acc;
+      outline: none;
+      box-shadow: 0 0 8px rgba(0, 122, 204, 0.4);
+    }
+    .options {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+      justify-content: center;
+      opacity: 0;
+      animation: slideIn 0.5s ease-out 0.6s forwards;
+    }
+    .options label {
+      font-size: 1rem;
+      color: #555;
+      transition: color 0.3s;
+    }
+    .options label:hover {
+      color: #007acc;
+    }
+    .button-group {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      justify-content: center;
+      opacity: 0;
+      animation: slideIn 0.5s ease-out 0.7s forwards;
+    }
+    button {
+      background: #00aaff;
+      color: white;
+      font-size: 1.2rem;
+      padding: 0.7rem 2rem;
+      border: none;
+      border-radius: 25px;
+      cursor: pointer;
+      transition: transform 0.2s, background 0.3s, box-shadow 0.3s;
+      box-shadow: 0 0 10px rgba(0, 170, 255, 0.3);
+      position: relative;
+      overflow: hidden;
+    }
+    button::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.2),
+        transparent
+      );
+      transition: left 0.4s;
+    }
+    button:hover::after {
+      left: 100%;
+    }
+    button:hover {
+      background: #007acc;
+      transform: translateY(-3px);
+      box-shadow: 0 6px 15px rgba(0, 122, 204, 0.4);
+    }
+    button:active {
+      transform: translateY(0);
+      box-shadow: 0 2px 5px rgba(0, 122, 204, 0.2);
+    }
+    button.reset { background: #ff5555; }
+    button.reset:hover { background: #cc3333; }
+    button.quick-draw { background: #55aa55; }
+    button.quick-draw:hover { background: #448844; }
+    button.sample { background: #ffaa00; }
+    button.sample:hover { background: #cc8800; }
+    #loadingBar {
+      width: 90%;
+      max-width: 400px;
+      height: 20px;
+      background: #eee;
+      border-radius: 10px;
+      overflow: hidden;
+      margin: 1rem 0;
+      display: none;
+      position: relative;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+    #loadingBarFill {
+      width: 0;
+      height: 100%;
+      background: linear-gradient(90deg, #00ccff, #0099ff, #00ccff);
+      background-size: 200% 100%;
+      animation: loading 3s ease-in-out forwards, gradientShift 2s ease infinite;
+      position: relative;
+      overflow: hidden;
+    }
+    #loadingBarFill::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(
+        45deg,
+        rgba(255, 255, 255, 0.2) 25%,
+        transparent 25%,
+        transparent 50%,
+        rgba(255, 255, 255, 0.2) 50%,
+        rgba(255, 255, 255, 0.2) 75%,
+        transparent 75%,
+        transparent
+      );
+      background-size: 30px 30px;
+      animation: sparkle 1s linear infinite;
+    }
+    @keyframes gradientShift {
+      0% { background-position: 0% 50%; }
+      100% { background-position: 200% 50%; }
+    }
+    @keyframes sparkle {
+      0% { background-position: 0 0; }
+      100% { background-position: 30px 30px; }
+    }
+    @keyframes loading {
+      from { width: 0; }
+      to { width: 100%; }
+    }
+    #drawAnimation {
+      font-size: 1.5rem;
+      color: #003366;
+      margin: 1rem 0;
+      display: none;
+      text-align: center;
+      transition: opacity 0.3s;
+    }
+    #drawAnimation.animate-pulse {
+      animation: pulse 0.5s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.7; transform: scale(1.05); }
+    }
+    #result {
+      margin-top: 2rem;
+      font-size: 1.5rem;
+      color: #003366;
+      background: rgba(255, 255, 255, 0.9);
+      padding: 1rem 2rem;
+      border-radius: 15px;
+      box-shadow: 0 0 10px rgba(0, 122, 204, 0.2);
+      white-space: pre-line;
+      text-align: center;
+      opacity: 0;
+      animation: slideIn 0.5s ease-out forwards;
+    }
+    .result-message {
+      font-weight: bold;
+      margin-bottom: 1rem;
+      animation: bounce 0.5s ease-out;
+    }
+    .winner-item {
+      opacity: 0;
+      transform: translateY(30px) scale(0.8);
+      animation: bounceIn 0.6s ease-out forwards;
+      padding: 0.5rem;
+      margin: 0.2rem;
+      border-radius: 8px;
+      background: linear-gradient(45deg, #e6f3ff, #ffffff);
+      box-shadow: 0 0 5px rgba(0, 122, 204, 0.3);
+      transition: transform 0.2s;
+    }
+    .winner-item:hover {
+      transform: scale(1.02);
+    }
+    @keyframes bounceIn {
+      0% { opacity: 0; transform: translateY(30px) scale(0.8); }
+      60% { opacity: 1; transform: translateY(-10px) scale(1.05); }
+      100% { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    @keyframes bounce {
+      0% { transform: scale(0.8); opacity: 0; }
+      60% { transform: scale(1.1); opacity: 1; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    #copyBtn, #shareBtn, #exportBtn, #imageBtn {
+      display: none;
+      margin-top: 1rem;
+      padding: 0.6rem 1.2rem;
+      font-size: 1rem;
+      border: none;
+      border-radius: 10px;
+      background: #00aaff;
+      color: #fff;
+      cursor: pointer;
+      box-shadow: 0 0 10px rgba(0, 170, 255, 0.3);
+      transition: background 0.3s, transform 0.2s, box-shadow 0.3s;
+      position: relative;
+      overflow: hidden;
+      opacity: 0;
+      animation: slideIn 0.5s ease-out forwards;
+    }
+    #copyBtn::after, #shareBtn::after, #exportBtn::after, #imageBtn::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.2),
+        transparent
+      );
+      transition: left 0.4s;
+    }
+    #copyBtn:hover::after, #shareBtn:hover::after, #exportBtn:hover::after, #imageBtn:hover::after {
+      left: 100%;
+    }
+    #copyBtn:hover, #shareBtn:hover, #exportBtn:hover, #imageBtn:hover {
+      background: #007acc;
+      transform: translateY(-3px);
+      box-shadow: 0 6px 15px rgba(0, 122, 204, 0.4);
+    }
+    #copyBtn:active, #shareBtn:active, #exportBtn:active, #imageBtn:active {
+      transform: translateY(0);
+      box-shadow: 0 2px 5px rgba(0, 122, 204, 0.2);
+    }
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      justify-content: center;
+      align-items: center;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    .modal.modal-show {
+      opacity: 1;
+    }
+    .modal-content {
+      background: white;
+      padding: 2rem;
+      border-radius: 12px;
+      text-align: center;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+      transform: scale(0.7);
+      transition: transform 0.3s ease;
+    }
+    .modal.modal-show .modal-content {
+      transform: scale(1);
+    }
+    .modal-content button {
+      margin-top: 1rem;
+    }
+    @media (max-width: 600px) {
+      h1 { font-size: 2rem; }
+      textarea, input[type="number"], input[type="text"] { width: 95%; }
+      button { font-size: 1rem; padding: 0.5rem 1.5rem; }
+      #result { font-size: 1.2rem; }
+      .options { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <h1>くじ引き・抽選ツール 🎉</h1>
+  <p>名前を1行ずつ入力して、抽選人数を選んで「抽選開始」を押してください！</p>
+  <div class="options">
+    <label><input type="checkbox" id="allowDuplicates"> 重複を許可（同じ人が複数回当選可能）</label>
+    <label><input type="checkbox" id="showRanking"> 順位を表示（1位、2位…）</label>
+    <label>カスタムメッセージ: <input type="text" id="customMessage" placeholder="例: 豪華賞品ゲット！"></label>
+  </div>
+  <textarea id="nameInput" placeholder="例：
+ユーザー1
+ユーザー2
+ユーザー3"></textarea>
+  <div id="nameCount">入力人数: 0人</div>
+  <div class="button-group">
+    <button id="sampleBtn" class="sample">サンプル名を挿入</button>
+  </div>
+  <label>抽選人数: <input type="number" id="drawCount" min="1" value="1" /></label>
+  <div class="button-group">
+    <button id="startDrawBtn">抽選開始</button>
+    <button id="quickDraw1" class="quick-draw">1人抽選</button>
+    <button id="quickDraw2" class="quick-draw">2人抽選</button>
+    <button id="quickDraw3" class="quick-draw">3人抽選</button>
+    <button id="resetBtn" class="reset">リセット</button>
+  </div>
+
+  <div id="loadingBar">
+    <div id="loadingBarFill"></div>
+  </div>
+  <div id="drawAnimation"></div>
+
+  <div id="result"></div>
+  <div class="button-group">
+    <button id="copyBtn">結果URLをコピー</button>
+    <button id="shareBtn">SNSでシェア</button>
+    <button id="exportBtn">CSVでエクスポート</button>
+    <button id="imageBtn">結果を画像で保存</button>
+  </div>
+
+  <div id="modal" class="modal">
+    <div class="modal-content">
+      <p id="modalMessage"></p>
+      <button id="closeModalBtn">閉じる</button>
+    </div>
+  </div>
+
+  <canvas id="resultCanvas" style="display: none;"></canvas>
+</body>
+</html>
