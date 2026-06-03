@@ -24,7 +24,7 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--text
 .icon-btn:hover{border-color:var(--accent);color:var(--accent);}
 /* ---- TABS ---- */
 .tab-nav{max-width:1100px;margin:0 auto;padding:18px 22px 0;display:flex;gap:4px;border-bottom:1px solid var(--border);overflow-x:auto;white-space:nowrap;-webkit-overflow-scrolling:touch;}
-.tab-nav::-webkit-scrollbar{display:none;} /* スクロールバーを非表示にしてスッキリさせる */
+.tab-nav::-webkit-scrollbar{display:none;}
 .tab-btn{padding:9px 18px;font-size:13px;font-weight:500;background:none;border:none;color:var(--text3);cursor:pointer;border-radius:8px 8px 0 0;transition:all .2s;font-family:'Noto Sans JP',sans-serif;display:flex;align-items:center;gap:6px;white-space:nowrap;flex-shrink:0;}
 .tab-btn:hover{color:var(--text2);background:var(--surface2);}
 .tab-btn.active{color:var(--accent);background:var(--surface);border:1px solid var(--border);border-bottom:1px solid var(--surface);}
@@ -890,7 +890,7 @@ function updateCount(){
   else{document.getElementById('progress-wrap').style.display='none';}
 }
 function loadSample(){document.getElementById('entries-input').value=tr('sample-entries');updateCount();buildWeightRows();}
-function clearEntries(){document.getElementById('entries-input').value='';weights={};updateCount();buildWeightRows();}
+function clearEntries(){document.getElementById('entries-input').value='';weights={};updateCount();buildWeightRows();showStage('idle');}
 function sortEntries(){const e=getEntries().sort((a,b)=>a.localeCompare(b,lang==='ja'?'ja':'en'));document.getElementById('entries-input').value=e.join('\n');updateCount();}
 function dedupEntries(){const e=[...new Set(getEntries())];document.getElementById('entries-input').value=e.join('\n');updateCount();showToast(lang==='ja'?'重複を削除しました':'Duplicates removed');}
 function weightedSample(pool,n,noDup){
@@ -1046,7 +1046,7 @@ function timerToggle(){
       const total=h*3600+m*60+s;
       if(timerRemaining===0||timerRemaining===timerTotal){timerRemaining=total;timerTotal=total;}
       if(timerRemaining<=0)return;
-      stopBuzzer(); // 開始時に前回の音があれば止める
+      stopBuzzer();
       timerRunning=true;
       document.getElementById('timer-start-btn').textContent=tr('timer-pause');
       timerInterval=setInterval(()=>{
@@ -1110,16 +1110,9 @@ function switchTimerMode(){
 }
 function startBuzzerLoop() {
   stopBuzzer();
-  document.getElementById('timer-stop-sound-btn').style.display = 'block'; // 停止ボタンを表示
-  
-  // 1回鳴らす
+  document.getElementById('timer-stop-sound-btn').style.display = 'block';
   playBuzzerSound();
-  
-  // 1.5秒周期でループ再生
-  buzzerInterval = setInterval(() => {
-    playBuzzerSound();
-  }, 1500);
-
+  buzzerInterval = setInterval(() => { playBuzzerSound(); }, 1500);
   const log = document.getElementById('buzzer-log');
   const item = document.createElement('div');
   item.className = 'buzzer-item';
@@ -1130,7 +1123,6 @@ function playBuzzerSound() {
   try {
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
     const volume = parseFloat(document.getElementById('timer-volume').value);
-    
     [440, 550, 660, 440].forEach((f, i) => {
       const osc = ctx.createOscillator(), g = ctx.createGain();
       osc.connect(g);g.connect(ctx.destination);
@@ -1143,11 +1135,8 @@ function playBuzzerSound() {
   } catch (e) {}
 }
 function stopBuzzer() {
-  if (buzzerInterval) {
-    clearInterval(buzzerInterval);
-    buzzerInterval = null;
-  }
-  document.getElementById('timer-stop-sound-btn').style.display = 'none'; // 停止ボタンを非表示
+  if (buzzerInterval) { clearInterval(buzzerInterval); buzzerInterval = null; }
+  document.getElementById('timer-stop-sound-btn').style.display = 'none';
 }
 
 /* =====================================================
@@ -1203,7 +1192,6 @@ function runPicker(){
   const interval=setInterval(()=>{res.textContent='→ '+items[Math.floor(Math.random()*items.length)];frames++;},80);
   setTimeout(()=>{clearInterval(interval);res.textContent='→ '+items[Math.floor(Math.random()*items.length)];if(document.getElementById('show-confetti').checked)launchConfetti(40);},900);
 }
-// init dice displays
 (function(){const c=document.getElementById('dice-displays');const s=document.createElement('span');s.style.cssText='font-size:44px;';s.textContent='🎲';c.appendChild(s);})();
 
 /* =====================================================
@@ -1255,9 +1243,10 @@ function renderChecklist(){
 }
 
 /* =====================================================
-   SHARE
+   SHARE (結果・履歴の維持に対応)
    ===================================================== */
 function closeShareModal(e){if(e.target===document.getElementById('share-modal'))closeModal('share-modal');}
+
 function generateShareUrl(){
   const p=new URLSearchParams();
   if(document.getElementById('share-lang').checked)p.set('lang',lang);
@@ -1271,12 +1260,25 @@ function generateShareUrl(){
   if(document.getElementById('share-entries').checked){
     const e=getEntries();if(e.length>0)p.set('entries',btoa(unescape(encodeURIComponent(e.join('\n')))));
   }
+  
+  // ★追加機能：現在の当選者と抽選履歴をURLに付与
+  if(drawHistory.length>0){
+    p.set('hist',btoa(unescape(encodeURIComponent(JSON.stringify(drawHistory)))));
+  }
+  if(allWinners.size>0){
+    p.set('wins',btoa(unescape(encodeURIComponent(JSON.stringify([...allWinners])))));
+  }
+  if(drawCount>0){
+    p.set('dc',drawCount);
+  }
+
   const base=window.location.href.split('?')[0].split('#')[0];
   const url=base+(p.toString()?'?'+p.toString():'');
   document.getElementById('share-url-input').value=url;
   document.getElementById('url-box').style.display='flex';
   const cb=document.getElementById('copy-btn');cb.textContent=tr('t-copy');cb.classList.remove('copied');
 }
+
 function copyShareUrl(){
   const url=document.getElementById('share-url-input').value;
   navigator.clipboard.writeText(url).then(()=>{
@@ -1285,6 +1287,7 @@ function copyShareUrl(){
     showToast(tr('toast-copied'));closeModal('share-modal');
   }).catch(()=>document.getElementById('share-url-input').select());
 }
+
 function loadFromUrl(){
   const p=new URLSearchParams(window.location.search);
   if(p.has('lang'))lang=p.get('lang');
@@ -1294,12 +1297,33 @@ function loadFromUrl(){
   if(p.has('nodup'))document.getElementById('no-duplicate').checked=p.get('nodup')==='1';
   if(p.has('exprev'))document.getElementById('exclude-prev').checked=p.get('exprev')==='1';
   if(p.has('confetti'))document.getElementById('show-confetti').checked=p.get('confetti')==='1';
+  
+  // ★追加機能：URLから履歴、当選者、カウントを復元
+  if(p.has('hist')){
+    try { drawHistory = JSON.parse(decodeURIComponent(escape(atob(p.get('hist'))))); } catch(e){}
+  }
+  if(p.has('wins')){
+    try {
+      const winsArr = JSON.parse(decodeURIComponent(escape(atob(p.get('wins')))));
+      allWinners = new Set(winsArr);
+    } catch(e){}
+  }
+  if(p.has('dc')){
+    drawCount = parseInt(p.get('dc')) || 0;
+  }
+  
+  // 復元した結果があればステージに表示を戻す
+  if(drawHistory.length > 0) {
+    const lastResult = drawHistory[0];
+    setTimeout(() => {
+      showResult(lastResult.winners, getEntries().length);
+    }, 100);
+  }
 }
 
 /* =====================================================
    SECRET FEATURES
    ==================================================== */
-// Konami Code
 const KONAMI=['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','b','a'];
 let konamiIdx=0;
 document.addEventListener('keydown',e=>{
@@ -1322,7 +1346,6 @@ function showEaster(){
 }
 function closeEaster(){document.getElementById('easter-overlay').classList.remove('show');}
 
-// Weight Panel
 function toggleWeightPanel(){
   const p=document.getElementById('weight-panel');p.classList.toggle('open');
   if(p.classList.contains('open')){buildWeightRows();showToast(tr('toast-weight'));}
@@ -1346,7 +1369,6 @@ function updateWeight(name,val){
   entries.forEach(e=>{const bar=document.getElementById('wbar-'+encodeURIComponent(e));if(bar)bar.style.width=Math.round((parseFloat(weights[e])||1)/maxW*100)+'%';});
 }
 
-// Quick Spin (triple-click draw btn)
 let drawBtnClicks=0,drawBtnTimer=null;
 document.getElementById('draw-btn').addEventListener('click',function(){
   drawBtnClicks++;clearTimeout(drawBtnTimer);
@@ -1393,9 +1415,10 @@ function closeQuickSpin(){
 loadFromUrl();
 applyLang();
 updateCount();
-showStage('idle');
+if(drawHistory.length === 0) {
+  showStage('idle');
+}
 buildChecklistTemplates();
-// init timer display
 (function(){const h=parseInt(document.getElementById('timer-h').value)||0,m=parseInt(document.getElementById('timer-m').value)||5,s=parseInt(document.getElementById('timer-s').value)||0;timerRemaining=h*3600+m*60+s;timerTotal=timerRemaining;document.getElementById('timer-display-clock').textContent=fmtTime(timerRemaining);})();
 </script>
 </body>
