@@ -645,12 +645,12 @@ let drawHistory = [], allWinners = new Set(), drawCount = 0;
 let weights = {};
 let logoClickCount = 0, logoClickTimer = null;
 let timerInterval = null, timerRemaining = 0, timerTotal = 0;
-let timerRunning = false, timerMode = 'countdown'; // 'countdown' | 'stopwatch'
+let timerRunning = false, timerMode = 'countdown';
 let stopwatchMs = 0, stopwatchStart = 0;
 let lapLog = [];
 let checkItems = [];
 let coinHistory = [], diceHistoryLog = [], randHistory = [];
-let buzzerInterval = null; // ループ再生用インターバル
+let buzzerInterval = null;
 
 const COLORS = ['#5b8dee','#e05c5c','#4caf7d','#9b7ff5','#f7c948','#e86c4d','#3bbfad','#e86ca0'];
 const DICE_EMOJI = {4:'🔷',6:'🎲',8:'🔶',10:'🔹',12:'🔸',20:'🎯'};
@@ -963,7 +963,6 @@ function divideTeams(){
     for(let i=0;i<count;i++)teams.push([]);
     members.forEach((m,i)=>teams[i%count].push(m));
     if(document.getElementById('team-balance').checked){
-      // distribute evenly
       teams=[];for(let i=0;i<count;i++)teams.push([]);
       const base=Math.floor(members.length/count),extra=members.length%count;
       let idx=0;for(let i=0;i<count;i++){const sz=base+(i<extra?1:0);teams[i]=members.slice(idx,idx+sz);idx+=sz;}
@@ -977,7 +976,7 @@ function divideTeams(){
   teams.forEach((team,i)=>{
     const card=document.createElement('div');card.className='team-card';
     const h=document.createElement('div');h.className='team-card-header';
-    const dot=document.createElement('div');dot.className='team-dot';dot.style.background=COLORS[i%COLORS.length];
+    const dot=document.createElement('div');dot.style.background=COLORS[i%COLORS.length];
     h.appendChild(dot);h.appendChild(document.createTextNode(tr('team-label')(i)));
     const mem=document.createElement('div');mem.className='team-members';
     team.forEach(m=>{const tag=document.createElement('span');tag.className='team-member-tag';tag.textContent=m;mem.appendChild(tag);});
@@ -1243,7 +1242,7 @@ function renderChecklist(){
 }
 
 /* =====================================================
-   SHARE (結果・履歴の維持に対応)
+   SHARE
    ===================================================== */
 function closeShareModal(e){if(e.target===document.getElementById('share-modal'))closeModal('share-modal');}
 
@@ -1261,7 +1260,6 @@ function generateShareUrl(){
     const e=getEntries();if(e.length>0)p.set('entries',btoa(unescape(encodeURIComponent(e.join('\n')))));
   }
   
-  // ★追加機能：現在の当選者と抽選履歴をURLに付与
   if(drawHistory.length>0){
     p.set('hist',btoa(unescape(encodeURIComponent(JSON.stringify(drawHistory)))));
   }
@@ -1298,7 +1296,6 @@ function loadFromUrl(){
   if(p.has('exprev'))document.getElementById('exclude-prev').checked=p.get('exprev')==='1';
   if(p.has('confetti'))document.getElementById('show-confetti').checked=p.get('confetti')==='1';
   
-  // ★追加機能：URLから履歴、当選者、カウントを復元
   if(p.has('hist')){
     try { drawHistory = JSON.parse(decodeURIComponent(escape(atob(p.get('hist'))))); } catch(e){}
   }
@@ -1312,7 +1309,7 @@ function loadFromUrl(){
     drawCount = parseInt(p.get('dc')) || 0;
   }
   
-  // 復元した結果があればステージに表示を戻す
+  // ★修正箇所：URLから復元した履歴をもとに、中央のメイン抽選画面（ステージ）も完全に表示を戻す
   if(drawHistory.length > 0) {
     const lastResult = drawHistory[0];
     setTimeout(() => {
