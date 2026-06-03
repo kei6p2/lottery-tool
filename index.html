@@ -321,7 +321,6 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--text
       <label class="share-option"><input type="checkbox" id="share-entries" checked><div><div class="share-option-label" id="sl-entries">参加者リスト</div><div class="share-option-sub" id="sl-entries-sub">入力した名前を共有</div></div></label>
       <label class="share-option"><input type="checkbox" id="share-settings" checked><div><div class="share-option-label" id="sl-settings">設定</div><div class="share-option-sub" id="sl-settings-sub">当選者数・オプションを共有</div></div></label>
       <label class="share-option"><input type="checkbox" id="share-lang" checked><div><div class="share-option-label" id="sl-lang">言語</div><div class="share-option-sub" id="sl-lang-sub">現在の言語設定を共有</div></div></label>
-      <label class="share-option"><input type="checkbox" id="share-shorten" checked><div><div class="share-option-label" id="sl-shorten" style="color:var(--accent);">短縮URLにする</div><div class="share-option-sub" id="sl-shorten-sub">リンクをすっきり短くしてコピー</div></div></label>
     </div>
     <button class="share-generate-btn" id="btn-gen-url" onclick="generateShareUrl()">URLを生成する</button>
     <div class="url-box" id="url-box" style="display:none">
@@ -947,28 +946,305 @@ function clearHistory(){drawHistory=[];allWinners=new Set();drawCount=0;renderHi
 function resetAll(){clearHistory();document.getElementById('entries-input').value='';weights={};updateCount();buildWeightRows();showStage('idle');}
 
 /* =====================================================
-   SHARE & SHORTEN (CORS回避用JSONP実装版)
+   TAB2: TEAMS
+   ===================================================== */
+function getTeamMembers(){return document.getElementById('team-input').value.split('\n').map(s=>s.trim()).filter(s=>s.length>0);}
+function updateTeamCount(){document.getElementById('team-count-num').textContent=getTeamMembers().length;}
+document.getElementById('team-input').addEventListener('input',updateTeamCount);
+function loadTeamSample(){document.getElementById('team-input').value=tr('sample-entries');updateTeamCount();}
+function divideTeams(){
+  let members=getTeamMembers();if(members.length===0){alert(lang==='ja'?'メンバーを入力してください':'Please enter members');return;}
+  if(document.getElementById('team-shuffle').checked)members=shuffle(members);
+  const num=parseInt(document.getElementById('team-num').value)||2;
+  const mode=document.getElementById('team-mode').value;
+  let teams=[];
+  if(mode==='bycount'){
+    const count=Math.min(num,members.length);
+    for(let i=0;i<count;i++)teams.push([]);
+    members.forEach((m,i)=>teams[i%count].push(m));
+    if(document.getElementById('team-balance').checked){
+      teams=[];for(let i=0;i<count;i++)teams.push([]);
+      const base=Math.floor(members.length/count),extra=members.length%count;
+      let idx=0;for(let i=0;i<count;i++){const sz=base+(i<extra?1:0);teams[i]=members.slice(idx,idx+sz);idx+=sz;}
+    }
+  } else {
+    const size=Math.max(1,num);for(let i=0;i<members.length;i+=size)teams.push(members.slice(i,i+size));
+  }
+  const area=document.getElementById('team-result-area');
+  const grid=document.createElement('div');grid.className='team-result-grid';
+  grid.style.gridTemplateColumns=teams.length<=2?'1fr 1fr':teams.length<=4?'1fr 1fr':'1fr 1fr 1fr';
+  teams.forEach((team,i)=>{
+    const card=document.createElement('div');card.className='team-card';
+    const h=document.createElement('div');h.className='team-card-header';
+    const dot=document.createElement('div');dot.style.background=COLORS[i%COLORS.length];
+    h.appendChild(dot);h.appendChild(document.createTextNode(tr('team-label')(i)));
+    const mem=document.createElement('div');mem.className='team-members';
+    team.forEach(m=>{const tag=document.createElement('span');tag.className='team-member-tag';tag.textContent=m;mem.appendChild(tag);});
+    card.appendChild(h);card.appendChild(mem);grid.appendChild(card);
+  });
+  area.innerHTML='';area.appendChild(grid);
+  if(document.getElementById('show-confetti').checked)launchConfetti(50);
+}
+
+/* =====================================================
+   TAB3: ORDER
+   ===================================================== */
+function getOrderMembers(){return document.getElementById('order-input').value.split('\n').map(s=>s.trim()).filter(s=>s.length>0);}
+function loadOrderSample(){document.getElementById('order-input').value=tr('sample-entries');}
+function shuffleOrder(){
+  const members=getOrderMembers();if(members.length===0){alert(lang==='ja'?'メンバーを入力してください':'Please enter members');return;}
+  const shuffled=shuffle(members);
+  const area=document.getElementById('order-result-area');area.innerHTML='';
+  const list=document.createElement('div');list.className='order-list';
+  shuffled.forEach((m,i)=>{
+    const item=document.createElement('div');item.className='order-item';item.style.animationDelay=(i*.05)+'s';
+    const rank=document.createElement('div');rank.className='order-rank'+(i===0?' gold':i===1?' silver':i===2?' bronze':'');
+    rank.textContent=i+1+'位';
+    const name=document.createElement('div');name.className='order-name';name.textContent=m;
+    item.appendChild(rank);item.appendChild(name);list.appendChild(item);
+  });
+  area.appendChild(list);
+  if(document.getElementById('order-reverse').checked){
+    const sep=document.createElement('div');sep.style.cssText='font-size:11px;color:var(--text3);text-align:center;margin:12px 0 4px;';sep.textContent=lang==='ja'?'▼ 逆順':'▼ Reversed';area.appendChild(sep);
+    const rlist=document.createElement('div');rlist.className='order-list';
+    [...shuffled].reverse().forEach((m,i)=>{
+      const item=document.createElement('div');item.className='order-item';item.style.animationDelay=((shuffled.length+i)*.05)+'s';
+      const rank=document.createElement('div');rank.className='order-rank';rank.textContent=shuffled.length-i+'位';
+      const name=document.createElement('div');name.className='order-name';name.textContent=m;
+      item.appendChild(rank);item.appendChild(name);rlist.appendChild(item);
+    });
+    area.appendChild(rlist);
+  }
+}
+
+/* =====================================================
+   TAB4: TIMER
+   ===================================================== */
+function fmtTime(s){const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sec=s%60;return h>0?`${h}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`:`${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;}
+function fmtMs(ms){const s=Math.floor(ms/1000),cs=Math.floor((ms%1000)/10);return fmtTime(s)+'.'+String(cs).padStart(2,'0');}
+function updateVolumeLabel() {
+  const vol = document.getElementById('timer-volume').value;
+  document.getElementById('vol-pct').textContent = Math.round(vol * 100) + '%';
+}
+function setTimerPreset(secs){
+  timerReset();
+  document.getElementById('timer-h').value=Math.floor(secs/3600);
+  document.getElementById('timer-m').value=Math.floor((secs%3600)/60);
+  document.getElementById('timer-s').value=secs%60;
+  timerRemaining=secs;timerTotal=secs;
+  document.getElementById('timer-display-clock').textContent=fmtTime(secs);
+  document.getElementById('timer-progress-bar').style.width='100%';
+  document.querySelectorAll('.preset-btn').forEach(b=>{b.classList.remove('active');if(parseInt(b.textContent)===secs/60||b.onclick.toString().includes(secs))b.classList.toggle('active');});
+}
+function timerToggle(){
+  if(timerMode==='countdown'){
+    if(!timerRunning){
+      const h=parseInt(document.getElementById('timer-h').value)||0;
+      const m=parseInt(document.getElementById('timer-m').value)||0;
+      const s=parseInt(document.getElementById('timer-s').value)||0;
+      const total=h*3600+m*60+s;
+      if(timerRemaining===0||timerRemaining===timerTotal){timerRemaining=total;timerTotal=total;}
+      if(timerRemaining<=0)return;
+      stopBuzzer();
+      timerRunning=true;
+      document.getElementById('timer-start-btn').textContent=tr('timer-pause');
+      timerInterval=setInterval(()=>{
+        timerRemaining--;
+        document.getElementById('timer-display-clock').textContent=fmtTime(timerRemaining);
+        const pct=timerTotal>0?timerRemaining/timerTotal*100:0;
+        const bar=document.getElementById('timer-progress-bar');bar.style.width=pct+'%';
+        bar.style.background=timerRemaining<=10?'var(--red)':timerRemaining<=30?'var(--accent2)':'var(--accent)';
+        document.getElementById('timer-display-clock').className='timer-clock'+(timerRunning?' running':'')+(timerRemaining<=10?' urgent':'');
+        if(timerRemaining<=0){
+          clearInterval(timerInterval);
+          timerRunning=false;
+          document.getElementById('timer-display-clock').textContent=tr('timer-finished');
+          document.getElementById('timer-display-clock').className='timer-clock urgent';
+          document.getElementById('timer-start-btn').textContent=tr('timer-start');
+          if(document.getElementById('timer-beep').checked)startBuzzerLoop();
+        }
+      },1000);
+    } else {
+      clearInterval(timerInterval);
+      timerRunning=false;
+      document.getElementById('timer-display-clock').className='timer-clock';
+      document.getElementById('timer-start-btn').textContent=tr('timer-start');
+    }
+  } else {
+    if(!timerRunning){timerRunning=true;stopwatchStart=Date.now()-stopwatchMs;document.getElementById('timer-start-btn').textContent=tr('timer-pause');timerInterval=setInterval(()=>{stopwatchMs=Date.now()-stopwatchStart;document.getElementById('timer-display-clock').textContent=fmtMs(stopwatchMs);},50);}
+    else{clearInterval(timerInterval);timerRunning=false;document.getElementById('timer-start-btn').textContent=tr('timer-start');}
+  }
+}
+function timerReset(){
+  clearInterval(timerInterval);timerRunning=false;
+  stopBuzzer();
+  document.getElementById('timer-start-btn').textContent=tr('timer-start');
+  document.getElementById('timer-display-clock').className='timer-clock';
+  if(timerMode==='countdown'){
+    const h=parseInt(document.getElementById('timer-h').value)||0;
+    const m=parseInt(document.getElementById('timer-m').value)||0;
+    const s=parseInt(document.getElementById('timer-s').value)||0;
+    const total=h*3600+m*60+s;timerRemaining=total;timerTotal=total;
+    document.getElementById('timer-display-clock').textContent=fmtTime(total);
+    document.getElementById('timer-progress-bar').style.width='100%';
+    document.getElementById('timer-progress-bar').style.background='var(--accent)';
+  } else {stopwatchMs=0;document.getElementById('timer-display-clock').textContent='00:00.00';}
+  lapLog=[];document.getElementById('buzzer-log').innerHTML='';
+}
+function timerLap(){
+  if(!timerRunning&&timerMode==='stopwatch')return;
+  const t=timerMode==='countdown'?fmtTime(timerRemaining):fmtMs(stopwatchMs);
+  lapLog.push(t);
+  const log=document.getElementById('buzzer-log');
+  const item=document.createElement('div');item.className='buzzer-item';
+  item.textContent=`Lap ${lapLog.length}: ${t}`;
+  log.insertBefore(item,log.firstChild);
+}
+function switchTimerMode(){
+  timerReset();
+  timerMode=timerMode==='countdown'?'stopwatch':'countdown';
+  document.getElementById('timer-mode-label').textContent=timerMode==='countdown'?tr('timer-countdown'):tr('timer-stopwatch');
+  document.getElementById('timer-mode-btn').textContent=timerMode==='countdown'?tr('timer-switch-sw'):tr('timer-switch-cd');
+  document.getElementById('timer-display-clock').textContent=timerMode==='countdown'?fmtTime(timerRemaining):'00:00.00';
+}
+function startBuzzerLoop() {
+  stopBuzzer();
+  document.getElementById('timer-stop-sound-btn').style.display = 'block';
+  playBuzzerSound();
+  buzzerInterval = setInterval(() => { playBuzzerSound(); }, 1500);
+  const log = document.getElementById('buzzer-log');
+  const item = document.createElement('div');
+  item.className = 'buzzer-item';
+  item.textContent = '🔔 ' + (lang === 'ja' ? 'タイマー終了' : 'Timer finished') + ' — ' + new Date().toLocaleTimeString();
+  log.insertBefore(item, log.firstChild);
+}
+function playBuzzerSound() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const volume = parseFloat(document.getElementById('timer-volume').value);
+    [440, 550, 660, 440].forEach((f, i) => {
+      const osc = ctx.createOscillator(), g = ctx.createGain();
+      osc.connect(g);g.connect(ctx.destination);
+      osc.frequency.value = f;
+      g.gain.setValueAtTime(volume, ctx.currentTime + i * 0.25);
+      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.25 + 0.22);
+      osc.start(ctx.currentTime + i * 0.25);
+      osc.stop(ctx.currentTime + i * 0.25 + 0.25);
+    });
+  } catch (e) {}
+}
+function stopBuzzer() {
+  if (buzzerInterval) { clearInterval(buzzerInterval); buzzerInterval = null; }
+  document.getElementById('timer-stop-sound-btn').style.display = 'none';
+}
+
+/* =====================================================
+   TAB5: COIN / DICE / RANDOM
+   ===================================================== */
+function tossCoin(){
+  const d=document.getElementById('coin-display');let frames=0;
+  const faces=['🪙','⚪'];const interval=setInterval(()=>{d.textContent=faces[frames%2];frames++;},80);
+  setTimeout(()=>{
+    clearInterval(interval);
+    const heads=Math.random()<.5;d.textContent=heads?'🌕':'🌑';
+    const res=heads?tr('coin-omote'):tr('coin-ura');
+    document.getElementById('coin-result').textContent=res;
+    coinHistory.unshift(res);if(coinHistory.length>12)coinHistory.pop();
+    const h=document.getElementById('coin-history');
+    h.innerHTML=coinHistory.map(r=>`<span class="rand-chip">${r}</span>`).join('');
+  },800);
+}
+function rollDice(){
+  const count=Math.min(6,parseInt(document.getElementById('dice-count').value)||1);
+  const faces=parseInt(document.getElementById('dice-faces').value)||6;
+  const container=document.getElementById('dice-displays');container.innerHTML='';
+  const results=[];let frames=0;
+  const interval=setInterval(()=>{
+    container.innerHTML='';
+    for(let i=0;i<count;i++){const sp=document.createElement('span');sp.style.cssText='font-size:40px;transition:transform .1s;';sp.textContent=DICE_EMOJI[faces]||'🎲';container.appendChild(sp);}
+    frames++;
+  },80);
+  setTimeout(()=>{
+    clearInterval(interval);container.innerHTML='';
+    for(let i=0;i<count;i++){results.push(Math.floor(Math.random()*faces)+1);}
+    results.forEach(r=>{const s=document.createElement('span');s.style.cssText='font-family:"Space Mono",monospace;font-size:32px;font-weight:700;color:var(--accent);min-width:40px;text-align:center;';s.textContent=r;container.appendChild(s);});
+    const sum=results.reduce((a,b)=>a+b,0);
+    document.getElementById('dice-result').textContent=count>1?(lang==='ja'?`合計: ${sum}`:`Total: ${sum}`):'';
+    diceHistoryLog.unshift(results.join('+')+(count>1?`=${sum}`:''));if(diceHistoryLog.length>10)diceHistoryLog.pop();
+    document.getElementById('dice-history').innerHTML=diceHistoryLog.map(r=>`<span class="rand-chip">${r}</span>`).join('');
+  },900);
+}
+function generateRandNum(){
+  const mn=parseInt(document.getElementById('rand-min').value)||1;
+  const mx=parseInt(document.getElementById('rand-max').value)||100;
+  if(mn>mx){alert(lang==='ja'?'最小値を最大値以下にしてください':'Min must be ≤ Max');return;}
+  const r=document.getElementById('rand-num-result');r.style.animation='none';r.offsetHeight;r.style.animation='winnerPop .3s cubic-bezier(.34,1.56,.64,1) both';
+  const val=Math.floor(Math.random()*(mx-mn+1))+mn;
+  r.textContent=val.toLocaleString();r.style.opacity='1';
+  randHistory.unshift(String(val));if(randHistory.length>10)randHistory.pop();
+  document.getElementById('rand-history').innerHTML=randHistory.map(v=>`<span class="rand-chip">${v}</span>`).join('');
+}
+function runPicker(){
+  const items=document.getElementById('picker-input').value.split('\n').map(s=>s.trim()).filter(s=>s.length>0);
+  if(items.length===0){alert(lang==='ja'?'項目を入力してください':'Please enter items');return;}
+  const res=document.getElementById('picker-result');let frames=0;
+  const interval=setInterval(()=>{res.textContent='→ '+items[Math.floor(Math.random()*items.length)];frames++;},80);
+  setTimeout(()=>{clearInterval(interval);res.textContent='→ '+items[Math.floor(Math.random()*items.length)];if(document.getElementById('show-confetti').checked)launchConfetti(40);},900);
+}
+(function(){const c=document.getElementById('dice-displays');const s=document.createElement('span');s.style.cssText='font-size:44px;';s.textContent='🎲';c.appendChild(s);})();
+
+/* =====================================================
+   TAB6: CHECKLIST
+   ===================================================== */
+function buildChecklistTemplates(){
+  const c=document.getElementById('checklist-templates');c.innerHTML='';
+  const keys=['travel','shopping','meeting','move','camping'];
+  const lk=['tmpl-travel','tmpl-shopping','tmpl-meeting','tmpl-move','tmpl-camping'];
+  keys.forEach((k,i)=>{
+    const btn=document.createElement('button');btn.className='tmpl-btn';btn.textContent=tr(lk[i]);
+    btn.onclick=()=>loadTemplate(k);c.appendChild(btn);
+  });
+}
+function loadTemplate(key){
+  const items=tr('tmpl-items')[key]||[];
+  checkItems=[...items.map(t=>({text:t,done:false,id:Date.now()+Math.random()}))];
+  renderChecklist();
+}
+function addCheckItem(){
+  const inp=document.getElementById('check-new-input');const val=inp.value.trim();
+  if(!val)return;
+  checkItems.push({text:val,done:false,id:Date.now()+Math.random()});
+  inp.value='';renderChecklist();
+}
+function toggleCheckItem(id){const item=checkItems.find(i=>i.id===id);if(item)item.done=!item.done;renderChecklist();}
+function deleteCheckItem(id){checkItems=checkItems.filter(i=>i.id!==id);renderChecklist();}
+function checkAll(){checkItems.forEach(i=>i.done=true);renderChecklist();}
+function uncheckAll(){checkItems.forEach(i=>i.done=false);renderChecklist();}
+function clearChecklist(){checkItems=[];renderChecklist();}
+function renderChecklist(){
+  const area=document.getElementById('checklist-area');
+  const done=checkItems.filter(i=>i.done).length;
+  const total=checkItems.length;
+  const pct=total>0?Math.round(done/total*100):0;
+  document.getElementById('check-done-count').textContent=done;
+  document.getElementById('check-total-count').textContent=total;
+  document.getElementById('check-pct-text').textContent=pct+'%';
+  document.getElementById('check-prog-bar').style.width=pct+'%';
+  if(checkItems.length===0){area.innerHTML=`<div style="color:var(--text3);font-size:14px;text-align:center;padding:20px 0;">アイテムを追加してください</div>`;return;}
+  area.innerHTML='';
+  checkItems.forEach((item,idx)=>{
+    const el=document.createElement('div');el.className='check-item'+(item.done?' done':'');
+    el.onclick=()=>toggleCheckItem(item.id);
+    el.innerHTML=`<div class="check-box">${item.done?'<svg width="12" height="10" viewBox="0 0 12 10" fill="none"><path d="M1 5L4.5 8.5L11 1" stroke="#0a0a12" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>':''}</div><span class="check-name">${item.text}</span><button class="check-del" onclick="event.stopPropagation();deleteCheckItem(${item.id})">×</button>`;
+    area.appendChild(el);
+  });
+  if(done===total&&total>0&&pct===100){showToast(lang==='ja'?'🎉 全部完了！':'🎉 All done!');}
+}
+
+/* =====================================================
+   SHARE
    ===================================================== */
 function closeShareModal(e){if(e.target===document.getElementById('share-modal'))closeModal('share-modal');}
-
-// JSONPのコールバック関数をグローバルに定義
-window.onTinyURLShortened = function(data) {
-  clearTimeout(window.tinyTimeout);
-  const urlInput = document.getElementById('share-url-input');
-  const urlBox = document.getElementById('url-box');
-  const genBtn = document.getElementById('btn-gen-url');
-  
-  if (data && data.shorturl) {
-    urlInput.value = data.shorturl;
-  }
-  urlBox.style.display = 'flex';
-  genBtn.disabled = false;
-  genBtn.textContent = lang === 'ja' ? 'URLを生成する' : 'Generate URL';
-  
-  // 使い終わったスクリプトタグを削除
-  const oldScript = document.getElementById('tinyurl-jsonp-script');
-  if (oldScript) oldScript.remove();
-};
 
 function generateShareUrl(){
   const p=new URLSearchParams();
@@ -995,43 +1271,10 @@ function generateShareUrl(){
   }
 
   const base=window.location.href.split('?')[0].split('#')[0];
-  const fullUrl=base+(p.toString()?'?'+p.toString():'');
-  
-  const genBtn=document.getElementById('btn-gen-url');
-  const urlInput=document.getElementById('share-url-input');
-  const urlBox=document.getElementById('url-box');
-  const cb=document.getElementById('copy-btn');
-  
-  cb.textContent=tr('t-copy');cb.classList.remove('copied');
-
-  // ★短縮URLにするチェックが入っている場合（JSONP通信でCORSを完全回避）
-  if(document.getElementById('share-shorten').checked && p.toString()){
-    genBtn.disabled = true;
-    genBtn.textContent = lang === 'ja' ? '短縮リンクを作成中...' : 'Shortening link...';
-    
-    // 古いスクリプトがあれば削除
-    const oldScript = document.getElementById('tinyurl-jsonp-script');
-    if (oldScript) oldScript.remove();
-    
-    // 3秒でタイムアウトして通常URLを出す安全処理
-    window.tinyTimeout = setTimeout(() => {
-      urlInput.value = fullUrl;
-      urlBox.style.display = 'flex';
-      genBtn.disabled = false;
-      genBtn.textContent = lang === 'ja' ? 'URLを生成する' : 'Generate URL';
-      const scriptTags = document.getElementById('tinyurl-jsonp-script');
-      if (scriptTags) scriptTags.remove();
-    }, 3000);
-
-    // TinyURLのJSONP APIエンドポイントを利用
-    const script = document.createElement('script');
-    script.id = 'tinyurl-jsonp-script';
-    script.src = `https://pico.to/api.php?callback=onTinyURLShortened&url=${encodeURIComponent(fullUrl)}`;
-    document.body.appendChild(script);
-  } else {
-    urlInput.value = fullUrl;
-    urlBox.style.display='flex';
-  }
+  const url=base+(p.toString()?'?'+p.toString():'');
+  document.getElementById('share-url-input').value=url;
+  document.getElementById('url-box').style.display='flex';
+  const cb=document.getElementById('copy-btn');cb.textContent=tr('t-copy');cb.classList.remove('copied');
 }
 
 function copyShareUrl(){
@@ -1066,6 +1309,7 @@ function loadFromUrl(){
     drawCount = parseInt(p.get('dc')) || 0;
   }
   
+  // ★修正箇所：URLから復元した履歴をもとに、中央のメイン抽選画面（ステージ）も完全に表示を戻す
   if(drawHistory.length > 0) {
     const lastResult = drawHistory[0];
     setTimeout(() => {
