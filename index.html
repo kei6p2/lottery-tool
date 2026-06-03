@@ -82,7 +82,7 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--text
 .right-col{display:flex;flex-direction:column;gap:18px;}
 .lottery-stage{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:26px 22px;text-align:center;min-height:205px;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;overflow:hidden;}
 .stage-bg{position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 50% 100%,rgba(247,201,72,.06) 0%,transparent 70%);pointer-events:none;}
-[data-theme="light"] .stage-bg{background:radial-gradient(ellipse 80% 60% at 50% 100%,rgba(224,160,32,.08) 0%,transparent 70%);}
+[data-theme=\"light\"] .stage-bg{background:radial-gradient(ellipse 80% 60% at 50% 100%,rgba(224,160,32,.08) 0%,transparent 70%);}
 .stage-idle{display:flex;flex-direction:column;align-items:center;gap:9px;}
 .stage-idle-icon{font-size:40px;opacity:.2;}
 .stage-idle-text{font-size:14px;color:var(--text3);}
@@ -218,7 +218,7 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--text
 .share-desc{font-size:13px;color:var(--text2);margin-bottom:13px;line-height:1.7;}
 .share-options{display:grid;gap:7px;margin-bottom:14px;}
 .share-option{display:flex;align-items:center;gap:9px;padding:10px 12px;background:var(--surface2);border:1px solid var(--border2);border-radius:10px;cursor:pointer;transition:all .2s;}
-.share-option input[type="checkbox"]{accent-color:var(--accent);width:15px;height:15px;flex-shrink:0;}
+.share-option input[type=\"checkbox\"]{accent-color:var(--accent);width:15px;height:15px;flex-shrink:0;}
 .share-option-label{font-size:13px;color:var(--text);font-weight:500;}
 .share-option-sub{font-size:11px;color:var(--text3);}
 .share-option:has(input:checked){border-color:var(--accent);}
@@ -260,7 +260,7 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--text
 .easter-sub{font-size:13px;color:var(--text2);margin-top:6px;}
 .easter-close{padding:9px 26px;background:var(--accent);color:#0a0a12;border:none;border-radius:30px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;transition:all .2s;}
 .easter-close:hover{transform:scale(1.05);}
-[data-party="1"]{animation:partyHue 3s linear infinite;}
+[data-party=\"1\"]{animation:partyHue 3s linear infinite;}
 @keyframes partyHue{0%,100%{filter:hue-rotate(0)}50%{filter:hue-rotate(180deg)}}
 /* ---- QUICK SPIN ---- */
 .quickspin-overlay{display:none;position:fixed;inset:0;z-index:500;background:var(--bg);align-items:center;justify-content:center;flex-direction:column;gap:20px;padding:20px;}
@@ -321,6 +321,7 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--text
       <label class="share-option"><input type="checkbox" id="share-entries" checked><div><div class="share-option-label" id="sl-entries">参加者リスト</div><div class="share-option-sub" id="sl-entries-sub">入力した名前を共有</div></div></label>
       <label class="share-option"><input type="checkbox" id="share-settings" checked><div><div class="share-option-label" id="sl-settings">設定</div><div class="share-option-sub" id="sl-settings-sub">当選者数・オプションを共有</div></div></label>
       <label class="share-option"><input type="checkbox" id="share-lang" checked><div><div class="share-option-label" id="sl-lang">言語</div><div class="share-option-sub" id="sl-lang-sub">現在の言語設定を共有</div></div></label>
+      <label class="share-option"><input type="checkbox" id="share-shorten" checked><div><div class="share-option-label" id="sl-shorten" style="color:var(--accent);">短縮URLにする</div><div class="share-option-sub" id="sl-shorten-sub">リンクをすっきり短くしてコピー</div></div></label>
     </div>
     <button class="share-generate-btn" id="btn-gen-url" onclick="generateShareUrl()">URLを生成する</button>
     <div class="url-box" id="url-box" style="display:none">
@@ -656,7 +657,7 @@ const COLORS = ['#5b8dee','#e05c5c','#4caf7d','#9b7ff5','#f7c948','#e86c4d','#3b
 const DICE_EMOJI = {4:'🔷',6:'🎲',8:'🔶',10:'🔹',12:'🔸',20:'🎯'};
 
 /* =====================================================
-   I18N
+   I18N (日本語・英語の基本キー群)
    ===================================================== */
 const i18n = {
   ja: {
@@ -725,7 +726,7 @@ const i18n = {
       'travel':['パスポート','財布','充電器','着替え','常備薬','ヘアドライヤー','傘','カメラ'],
       'shopping':['牛乳','卵','野菜','肉','パン','調味料','洗剤','シャンプー'],
       'meeting':['資料の準備','プロジェクター確認','議事録用紙','ペン','水分補給'],
-      'move':['荷造り完了','電気・ガス・水道の手続き','住所変更','引越し業者手配','新居の清掃'],
+      'move':['荷造り完了','電気・ガス・水道の手続き','住所変更','引越し業者手配','新居の清補'],
       'camping':['テント','寝袋','ランタン','虫除けスプレー','食材','焚き火道具','救急キット','地図'],
     },
     'order-result-title':'順番リスト',
@@ -1242,7 +1243,7 @@ function renderChecklist(){
 }
 
 /* =====================================================
-   SHARE
+   SHARE & SHORTEN (短縮URL連携対応版)
    ===================================================== */
 function closeShareModal(e){if(e.target===document.getElementById('share-modal'))closeModal('share-modal');}
 
@@ -1271,10 +1272,47 @@ function generateShareUrl(){
   }
 
   const base=window.location.href.split('?')[0].split('#')[0];
-  const url=base+(p.toString()?'?'+p.toString():'');
-  document.getElementById('share-url-input').value=url;
-  document.getElementById('url-box').style.display='flex';
-  const cb=document.getElementById('copy-btn');cb.textContent=tr('t-copy');cb.classList.remove('copied');
+  const fullUrl=base+(p.toString()?'?'+p.toString():'');
+  
+  const genBtn=document.getElementById('btn-gen-url');
+  const urlInput=document.getElementById('share-url-input');
+  const urlBox=document.getElementById('url-box');
+  const cb=document.getElementById('copy-btn');
+  
+  cb.textContent=tr('t-copy');cb.classList.remove('copied');
+
+  // ★短縮URLにするチェックが入っている場合
+  if(document.getElementById('share-shorten').checked && p.toString()){
+    genBtn.disabled = true;
+    const origText = genBtn.textContent;
+    genBtn.textContent = lang === 'ja' ? '短縮リンクを作成中...' : 'Shortening link...';
+    
+    // 無料公開の短縮URL API (is.gd) を利用 (JSONPクロスドメイン対応)
+    const apiUrl = `https://is.gd/create.php?format=json&url=${encodeURIComponent(fullUrl)}`;
+    
+    fetch(apiUrl)
+      .then(res => res.json())
+      .then(data => {
+        if(data.shorturl){
+          urlInput.value = data.shorturl;
+        } else {
+          urlInput.value = fullUrl; // エラー時はフォールバックとして通常URL
+        }
+        urlBox.style.display='flex';
+      })
+      .catch(() => {
+        urlInput.value = fullUrl; // オフライン時などのフォールバック
+        urlBox.style.display='flex';
+      })
+      .finally(() => {
+        genBtn.disabled = false;
+        genBtn.textContent = origText;
+      });
+  } else {
+    // 短縮チェックがない、またはパラメータがない場合
+    urlInput.value = fullUrl;
+    urlBox.style.display='flex';
+  }
 }
 
 function copyShareUrl(){
@@ -1309,7 +1347,6 @@ function loadFromUrl(){
     drawCount = parseInt(p.get('dc')) || 0;
   }
   
-  // ★修正箇所：URLから復元した履歴をもとに、中央のメイン抽選画面（ステージ）も完全に表示を戻す
   if(drawHistory.length > 0) {
     const lastResult = drawHistory[0];
     setTimeout(() => {
