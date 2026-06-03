@@ -1,788 +1,1394 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="ja" data-theme="dark">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="description" content="くじ引き・抽選ツールで簡単・楽しく名前抽選！カスタムオプションでイベントを盛り上げよう！" />
-  <meta name="keywords" content="抽選ツール, ランダム抽選, 宝くじ, イベント抽選" />
-  <meta property="og:title" content="くじ引き・抽選ツール" />
-  <meta property="og:description" content="シンプルで楽しい名前抽選ツール！結果をシェアしてイベントを盛り上げよう！" />
-  <meta property="og:type" content="website" />
-  <meta property="og:url" content="https://kei6p2.github.io/lottery-tool/" />
-  <meta property="og:image" content="https://kei6p2.github.io/lottery-tool/og-image.jpg" />
-  <title>くじ引き・抽選ツール</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
-  <script defer>
-    // 注意: このコードはHTTPS環境で動作する必要があります（navigator.share や navigator.clipboard を使用するため）。
-    // サーバー上でUTF-8エンコーディングを正しく設定してください（例: .htaccessでAddDefaultCharset UTF-8）。
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ギャザーキット / GatherKit</title>
+<link href="https://fonts.googleapis.com/css2?family=Kaisei+Decol:wght@400;500;700&family=Noto+Sans+JP:wght@400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{--accent:#f7c948;--accent2:#e8a020;--accent-glow:rgba(247,201,72,0.18);--red:#e05c5c;--green:#4caf7d;--blue:#5b8dee;--purple:#9b7ff5;--radius:12px;--radius-lg:18px;}
+[data-theme="dark"]{--bg:#090910;--surface:#111120;--surface2:#181828;--surface3:#202038;--border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);--text:#f0ede8;--text2:#9896a4;--text3:#5e5c6e;--modal-bg:#111120;}
+[data-theme="light"]{--bg:#f4f2ec;--surface:#fff;--surface2:#f0ede5;--surface3:#e5e1d8;--border:rgba(0,0,0,0.07);--border2:rgba(0,0,0,0.14);--text:#18160f;--text2:#6a6760;--text3:#a09d96;--modal-bg:#fff;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;line-height:1.6;transition:background .3s,color .3s;}
+/* ---- HEADER ---- */
+.header{padding:14px 32px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);gap:10px;flex-wrap:wrap;}
+.logo{font-family:'Kaisei Decol',serif;font-size:19px;font-weight:700;color:var(--accent);display:flex;align-items:center;gap:9px;user-select:none;}
+.logo-icon{width:32px;height:32px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:17px;transition:transform .2s;cursor:pointer;}
+.logo-icon:hover{transform:rotate(15deg);}
+.hctrl{display:flex;align-items:center;gap:7px;flex-wrap:wrap;}
+.pill-grp{display:flex;background:var(--surface2);border-radius:8px;overflow:hidden;border:1px solid var(--border2);}
+.pill-btn{padding:6px 14px;font-size:12px;font-weight:500;cursor:pointer;background:none;border:none;color:var(--text2);transition:all .2s;font-family:'Noto Sans JP',sans-serif;}
+.pill-btn.active{background:var(--accent);color:#0a0a12;}
+.icon-btn{width:34px;height:34px;display:flex;align-items:center;justify-content:center;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;cursor:pointer;transition:all .2s;font-size:15px;color:var(--text2);}
+.icon-btn:hover{border-color:var(--accent);color:var(--accent);}
+/* ---- TABS ---- */
+.tab-nav{max-width:1100px;margin:0 auto;padding:18px 22px 0;display:flex;gap:4px;border-bottom:1px solid var(--border);}
+.tab-btn{padding:9px 18px;font-size:13px;font-weight:500;background:none;border:none;color:var(--text3);cursor:pointer;border-radius:8px 8px 0 0;transition:all .2s;font-family:'Noto Sans JP',sans-serif;display:flex;align-items:center;gap:6px;white-space:nowrap;}
+.tab-btn:hover{color:var(--text2);background:var(--surface2);}
+.tab-btn.active{color:var(--accent);background:var(--surface);border:1px solid var(--border);border-bottom:1px solid var(--surface);}
+.tab-icon{font-size:15px;}
+.tab-page{display:none;max-width:1100px;margin:0 auto;padding:28px 22px 60px;}
+.tab-page.active{display:block;}
+/* ---- GRID ---- */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:22px;align-items:start;}
+.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px;align-items:start;}
+/* ---- PANEL ---- */
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:22px;transition:background .3s;}
+.panel-title{font-size:11px;font-weight:500;color:var(--text2);text-transform:uppercase;letter-spacing:.12em;margin-bottom:13px;display:flex;align-items:center;gap:7px;}
+.panel-title::before{content:'';width:3px;height:12px;background:var(--accent);border-radius:2px;}
+/* ---- FORM ELEMENTS ---- */
+.ent-input{width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:10px;padding:11px 13px;font-size:14px;color:var(--text);font-family:'Noto Sans JP',sans-serif;resize:vertical;min-height:148px;outline:none;transition:border-color .2s,background .3s;line-height:1.8;}
+.ent-input:focus{border-color:var(--accent);}
+.ent-input::placeholder{color:var(--text3);}
+.input-hint{font-size:11px;color:var(--text3);margin-top:6px;}
+.count-bar{display:flex;align-items:center;justify-content:space-between;margin-top:9px;padding:7px 11px;background:var(--surface2);border-radius:8px;}
+.count-lbl{font-size:13px;color:var(--text2);}
+.count-num{font-family:'Space Mono',monospace;font-size:14px;color:var(--accent);font-weight:700;}
+.num-input{width:72px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:6px 9px;font-size:14px;font-family:'Space Mono',monospace;color:var(--text);text-align:center;outline:none;transition:border-color .2s;}
+.num-input:focus{border-color:var(--accent);}
+.text-input{width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:8px 12px;font-size:14px;color:var(--text);font-family:'Noto Sans JP',sans-serif;outline:none;transition:border-color .2s;}
+.text-input:focus{border-color:var(--accent);}
+.select-input{width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:8px 12px;font-size:13px;color:var(--text);font-family:'Noto Sans JP',sans-serif;outline:none;cursor:pointer;}
+.setting-row{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.setting-lbl{font-size:14px;color:var(--text);font-weight:500;}
+.setting-sub{font-size:11px;color:var(--text3);margin-top:1px;}
+.toggle-switch{position:relative;width:44px;height:24px;cursor:pointer;flex-shrink:0;}
+.toggle-switch input{display:none;}
+.toggle-slider{position:absolute;inset:0;background:var(--surface3);border-radius:12px;border:1px solid var(--border2);transition:.25s;}
+.toggle-slider::after{content:'';position:absolute;left:3px;top:3px;width:16px;height:16px;background:var(--text3);border-radius:50%;transition:.25s;}
+.toggle-switch input:checked+.toggle-slider{background:var(--accent-glow);border-color:var(--accent);}
+.toggle-switch input:checked+.toggle-slider::after{left:20px;background:var(--accent);}
+.divider{height:1px;background:var(--border);margin:12px 0;}
+.settings-grid{display:grid;gap:11px;margin-bottom:16px;}
+/* ---- BUTTONS ---- */
+.draw-btn{width:100%;padding:14px;background:var(--accent);color:#0a0a12;border:none;border-radius:var(--radius);font-family:'Kaisei Decol',serif;font-size:17px;font-weight:700;cursor:pointer;transition:all .2s;letter-spacing:.05em;}
+.draw-btn:hover{background:#ffd45e;transform:translateY(-1px);}
+.draw-btn:active{transform:translateY(0);}
+.draw-btn:disabled{background:var(--surface3);color:var(--text3);cursor:not-allowed;transform:none;}
+.secondary-btn{width:100%;padding:9px;background:none;color:var(--text3);border:1px solid var(--border);border-radius:var(--radius);font-family:'Noto Sans JP',sans-serif;font-size:13px;cursor:pointer;transition:all .2s;margin-top:6px;}
+.secondary-btn:hover{border-color:var(--red);color:var(--red);}
+.action-btn{padding:9px 18px;background:var(--accent);color:#0a0a12;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;transition:all .2s;font-family:'Noto Sans JP',sans-serif;white-space:nowrap;}
+.action-btn:hover{background:#ffd45e;}
+.action-btn.secondary{background:var(--surface2);color:var(--text2);border:1px solid var(--border2);}
+.action-btn.secondary:hover{border-color:var(--accent);color:var(--accent);background:var(--surface2);}
+.action-btn.danger{background:none;color:var(--red);border:1px solid var(--red);}
+.action-btn.danger:hover{background:var(--red);color:#fff;}
+.entries-actions{display:flex;gap:7px;margin-top:8px;}
+.small-btn{flex:1;padding:6px 9px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;color:var(--text2);font-size:12px;font-family:'Noto Sans JP',sans-serif;cursor:pointer;transition:all .2s;text-align:center;}
+.small-btn:hover{border-color:var(--accent);color:var(--accent);}
+/* ---- LOTTERY STAGE ---- */
+.right-col{display:flex;flex-direction:column;gap:18px;}
+.lottery-stage{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:26px 22px;text-align:center;min-height:205px;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;overflow:hidden;}
+.stage-bg{position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 50% 100%,rgba(247,201,72,.06) 0%,transparent 70%);pointer-events:none;}
+[data-theme="light"] .stage-bg{background:radial-gradient(ellipse 80% 60% at 50% 100%,rgba(224,160,32,.08) 0%,transparent 70%);}
+.stage-idle{display:flex;flex-direction:column;align-items:center;gap:9px;}
+.stage-idle-icon{font-size:40px;opacity:.2;}
+.stage-idle-text{font-size:14px;color:var(--text3);}
+.result-display{display:none;flex-direction:column;align-items:center;gap:10px;}
+.result-badge{font-family:'Space Mono',monospace;font-size:11px;background:var(--surface3);color:var(--text2);padding:3px 10px;border-radius:20px;border:1px solid var(--border2);letter-spacing:.1em;}
+.result-winner{font-family:'Kaisei Decol',serif;font-size:36px;font-weight:700;color:var(--accent);line-height:1.2;word-break:break-all;animation:winnerPop .5s cubic-bezier(.34,1.56,.64,1) both;}
+@keyframes winnerPop{0%{transform:scale(.4);opacity:0}100%{transform:scale(1);opacity:1}}
+.result-multi{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;max-width:340px;}
+.result-tag{font-family:'Space Mono',monospace;font-size:14px;font-weight:700;background:var(--surface2);border:1px solid var(--accent);color:var(--accent);padding:5px 13px;border-radius:8px;animation:tagIn .35s cubic-bezier(.34,1.56,.64,1) both;}
+@keyframes tagIn{0%{transform:scale(.6) rotate(-6deg);opacity:0}100%{transform:scale(1) rotate(0);opacity:1}}
+.spinning{display:none;flex-direction:column;align-items:center;gap:12px;}
+.spin-wheel svg{animation:spinWheel .6s linear infinite;}
+@keyframes spinWheel{to{transform:rotate(360deg)}}
+.spin-text{font-family:'Kaisei Decol',serif;font-size:14px;color:var(--text2);animation:pulse .8s ease-in-out infinite alternate;}
+@keyframes pulse{to{opacity:.4}}
+/* ---- HISTORY ---- */
+.history-panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px 18px;}
+.history-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.history-list{display:flex;flex-direction:column;gap:5px;max-height:220px;overflow-y:auto;}
+.history-list::-webkit-scrollbar{width:4px;}
+.history-list::-webkit-scrollbar-thumb{background:var(--surface3);border-radius:2px;}
+.history-item{display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--surface2);border-radius:8px;border:1px solid var(--border);animation:slideIn .3s ease both;}
+@keyframes slideIn{from{transform:translateX(-8px);opacity:0}to{transform:translateX(0);opacity:1}}
+.history-num{font-family:'Space Mono',monospace;font-size:11px;color:var(--text3);min-width:20px;}
+.history-names{font-size:13px;color:var(--text);font-weight:500;flex:1;}
+.history-time{font-family:'Space Mono',monospace;font-size:11px;color:var(--text3);}
+.no-history{text-align:center;padding:18px;color:var(--text3);font-size:14px;}
+.clear-history-btn{font-size:12px;color:var(--text3);background:none;border:none;cursor:pointer;padding:3px 7px;border-radius:4px;transition:color .2s;font-family:'Noto Sans JP',sans-serif;}
+.clear-history-btn:hover{color:var(--red);}
+.prog-wrap{margin-top:8px;height:3px;background:var(--surface2);border-radius:2px;overflow:hidden;}
+.prog-bar{height:100%;background:var(--accent);border-radius:2px;transition:width .3s;}
 
-    // 祝福メッセージ
-    const defaultMessages = [
-      'おめでとう！素晴らしい運の持ち主！',
-      'やったね！当選おめでとう！',
-      'キミが主役だ！おめでとう！',
-      '運命の当選！おめでとう！'
-    ];
+/* ============================
+   TAB2: チーム分け
+   =========================== */
+.team-result-grid{display:grid;gap:12px;margin-top:16px;}
+.team-card{background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius);padding:14px 16px;}
+.team-card-header{font-family:'Kaisei Decol',serif;font-size:14px;font-weight:700;margin-bottom:9px;display:flex;align-items:center;gap:7px;}
+.team-dot{width:10px;height:10px;border-radius:50%;}
+.team-members{display:flex;flex-wrap:wrap;gap:5px;}
+.team-member-tag{font-size:12px;background:var(--surface);border:1px solid var(--border2);color:var(--text);padding:3px 10px;border-radius:20px;}
 
-    // Base64エンコード（URLセーフ）
-    function base64urlEncode(str) {
-      try {
-        return btoa(unescape(encodeURIComponent(str)))
-          .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-      } catch (e) {
-        console.error('Base64エンコードエラー:', e);
-        showModal('エンコード中にエラーが発生しました。');
-        return '';
-      }
-    }
+/* ============================
+   TAB3: 順番決め
+   =========================== */
+.order-list{display:flex;flex-direction:column;gap:6px;margin-top:12px;}
+.order-item{display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--surface2);border-radius:10px;border:1px solid var(--border);animation:tagIn .3s ease both;}
+.order-rank{font-family:'Space Mono',monospace;font-size:13px;font-weight:700;color:var(--accent);min-width:26px;}
+.order-rank.gold{color:#f7c948;}
+.order-rank.silver{color:#c0c0c8;}
+.order-rank.bronze{color:#cd7f32;}
+.order-name{font-size:14px;font-weight:500;color:var(--text);}
 
-    // Base64デコード（URLセーフ）
-    function base64urlDecode(str) {
-      try {
-        str = str.replace(/-/g, '+').replace(/_/g, '/');
-        while (str.length % 4) str += '=';
-        return decodeURIComponent(escape(atob(str)));
-      } catch (e) {
-        console.error('Base64デコードエラー:', e);
-        return '';
-      }
-    }
+/* ============================
+   TAB4: タイマー
+   =========================== */
+.timer-display{text-align:center;padding:32px 0 24px;}
+.timer-clock{font-family:'Space Mono',monospace;font-size:64px;font-weight:700;color:var(--accent);letter-spacing:.05em;line-height:1;}
+.timer-clock.running{animation:timerTick .5s ease-in-out infinite alternate;}
+@keyframes timerTick{to{opacity:.85}}
+.timer-clock.urgent{color:var(--red)!important;animation:urgentPulse .4s ease-in-out infinite alternate;}
+@keyframes urgentPulse{0%{opacity:1;transform:scale(1)}100%{opacity:.7;transform:scale(1.02)}}
+.timer-label{font-size:13px;color:var(--text3);margin-top:6px;}
+.timer-controls{display:flex;gap:8px;justify-content:center;margin-top:18px;flex-wrap:wrap;}
+.timer-btn{padding:10px 22px;border:1px solid var(--border2);border-radius:10px;font-size:14px;font-weight:500;cursor:pointer;transition:all .2s;font-family:'Noto Sans JP',sans-serif;background:var(--surface2);color:var(--text);}
+.timer-btn:hover{border-color:var(--accent);color:var(--accent);}
+.timer-btn.primary{background:var(--accent);color:#0a0a12;border-color:var(--accent);}
+.timer-btn.primary:hover{background:#ffd45e;}
+.timer-btn.danger{border-color:var(--red);color:var(--red);}
+.timer-btn.danger:hover{background:var(--red);color:#fff;}
+.timer-presets{display:flex;gap:6px;justify-content:center;margin-bottom:18px;flex-wrap:wrap;}
+.preset-btn{padding:5px 14px;background:var(--surface2);border:1px solid var(--border2);border-radius:20px;font-size:12px;cursor:pointer;color:var(--text2);transition:all .2s;font-family:'Space Mono',monospace;}
+.preset-btn:hover{border-color:var(--accent);color:var(--accent);}
+.preset-btn.active{background:var(--accent);color:#0a0a12;border-color:var(--accent);}
+.timer-progress{height:6px;background:var(--surface2);border-radius:3px;overflow:hidden;margin-top:16px;}
+.timer-progress-bar{height:100%;background:var(--accent);border-radius:3px;transition:width .5s linear,background .5s;}
+.buzzer-log{max-height:120px;overflow-y:auto;margin-top:12px;display:flex;flex-direction:column;gap:4px;}
+.buzzer-item{font-size:12px;color:var(--text2);padding:4px 8px;background:var(--surface2);border-radius:6px;font-family:'Space Mono',monospace;}
+.volume-row {display:flex;align-items:center;gap:12px;margin-top:10px;}
+.volume-slider {flex:1;accent-color:var(--accent);cursor:pointer;height:6px;background:var(--surface3);border-radius:3px;}
 
-    function getParam(name) {
-      try {
-        const url = new URL(window.location.href);
-        return url.searchParams.get(name);
-      } catch (e) {
-        console.error('URLパラメータ取得エラー:', e);
-        return null;
-      }
-    }
+/* ============================
+   TAB5: コイン・サイコロ
+   =========================== */
+.randomizer-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.rand-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:22px;text-align:center;}
+.rand-display{font-size:72px;line-height:1;margin:16px 0;transition:all .2s;display:block;}
+.rand-display.spinning-anim{animation:randSpin .08s linear infinite;}
+@keyframes randSpin{0%{transform:rotateY(0)}50%{transform:rotateY(90deg)}100%{transform:rotateY(0)}}
+.rand-result-text{font-family:'Kaisei Decol',serif;font-size:20px;font-weight:700;color:var(--accent);min-height:28px;}
+.rand-history{margin-top:10px;display:flex;flex-wrap:wrap;gap:4px;justify-content:center;max-height:60px;overflow:hidden;}
+.rand-chip{font-size:11px;background:var(--surface2);border:1px solid var(--border);color:var(--text3);padding:2px 8px;border-radius:10px;font-family:'Space Mono',monospace;}
+.num-range-row{display:flex;gap:8px;align-items:center;margin-bottom:12px;justify-content:center;}
+.num-range-row input{width:70px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:6px 8px;font-size:13px;font-family:'Space Mono',monospace;color:var(--text);text-align:center;outline:none;}
+.num-range-row input:focus{border-color:var(--accent);}
+.num-range-sep{color:var(--text3);font-size:14px;}
+.big-num{font-family:'Space Mono',monospace;font-size:52px;font-weight:700;color:var(--accent);margin:14px 0;animation:winnerPop .3s cubic-bezier(.34,1.56,.64,1) both;}
 
-    function updateURL(dataStr) {
-      try {
-        if (window.location.protocol !== 'about:') {
-          const url = new URL(window.location.href);
-          url.searchParams.set('data', dataStr);
-          window.history.replaceState(null, '', url);
-        } else {
-          console.log('about:srcdoc 環境のため、URL更新をスキップ');
-        }
-      } catch (e) {
-        console.error('URL更新エラー:', e);
-        showModal('URLの更新に失敗しました。');
-      }
-    }
+/* ============================
+   TAB6: チェックリスト / 持ち物くじ
+   =========================== */
+.checklist-area{display:grid;gap:8px;margin-top:10px;max-height:320px;overflow-y:auto;padding-right:2px;}
+.check-item{display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;cursor:pointer;transition:all .2s;}
+.check-item:hover{border-color:var(--border2);}
+.check-item.done{opacity:.5;}
+.check-item.done .check-name{text-decoration:line-through;color:var(--text3);}
+.check-box{width:18px;height:18px;border:2px solid var(--border2);border-radius:5px;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .2s;}
+.check-item.done .check-box{background:var(--accent);border-color:var(--accent);}
+.check-name{font-size:14px;color:var(--text);flex:1;}
+.check-del{background:none;border:none;color:var(--text3);cursor:pointer;font-size:16px;padding:0 2px;transition:color .2s;line-height:1;}
+.check-del:hover{color:var(--red);}
+.check-add-row{display:flex;gap:7px;margin-top:10px;}
+.check-stats{display:flex;gap:12px;align-items:center;margin-bottom:10px;}
+.check-stat{font-size:12px;color:var(--text3);}
+.check-stat span{color:var(--accent);font-weight:700;font-family:'Space Mono',monospace;}
+.check-prog{flex:1;height:4px;background:var(--surface2);border-radius:2px;overflow:hidden;}
+.check-prog-bar{height:100%;background:var(--accent);border-radius:2px;transition:width .3s;}
+.checklist-templates{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;}
+.tmpl-btn{padding:5px 12px;background:var(--surface2);border:1px solid var(--border2);border-radius:20px;font-size:12px;cursor:pointer;color:var(--text2);transition:all .2s;font-family:'Noto Sans JP',sans-serif;}
+.tmpl-btn:hover{border-color:var(--accent);color:var(--accent);}
 
-    function showModal(message) {
-      const modal = document.getElementById('modal');
-      const modalMessage = document.getElementById('modalMessage');
-      modalMessage.textContent = message;
-      modal.style.display = 'flex';
-      modal.classList.add('modal-show');
-    }
-
-    function closeModal() {
-      const modal = document.getElementById('modal');
-      modal.classList.remove('modal-show');
-      setTimeout(() => {
-        modal.style.display = 'none';
-      }, 300);
-    }
-
-    function updateNameCount() {
-      const textarea = document.getElementById('nameInput');
-      const names = textarea.value.trim().split('\n').map(n => n.trim()).filter(Boolean);
-      document.getElementById('nameCount').textContent = `入力人数: ${names.length}人`;
-    }
-
-    function insertSampleNames() {
-      const textarea = document.getElementById('nameInput');
-      textarea.value = `ユーザー1\nユーザー2\nユーザー3\nユーザー4\nユーザー5`;
-      updateNameCount();
-    }
-
-    function setDrawCount(count) {
-      document.getElementById('drawCount').value = count;
-      startDraw();
-    }
-
-    function showDrawAnimation(names) {
-      const drawAnimation = document.getElementById('drawAnimation');
-      drawAnimation.style.display = 'block';
-      drawAnimation.classList.add('animate-pulse');
-      let interval = setInterval(() => {
-        const randomName = names[Math.floor(Math.random() * names.length)];
-        drawAnimation.textContent = `抽選中: ${randomName}`;
-      }, 100);
-      return () => {
-        clearInterval(interval);
-        drawAnimation.classList.remove('animate-pulse');
-        drawAnimation.style.display = 'none';
-        drawAnimation.textContent = '';
-      };
-    }
-
-    function showResult(winners, showRanking, customMessage) {
-      const resultDiv = document.getElementById('result');
-      const message = customMessage || defaultMessages[Math.floor(Math.random() * defaultMessages.length)];
-      resultDiv.innerHTML = `<div class="result-message">${message}</div>`;
-      winners.forEach((winner, index) => {
-        setTimeout(() => {
-          const winnerDiv = document.createElement('div');
-          winnerDiv.className = 'winner-item';
-          winnerDiv.textContent = showRanking ? `${index + 1}位: ${winner}` : `🎉 ${winner}`;
-          winnerDiv.style.animationDelay = `${index * 0.5}s`;
-          resultDiv.appendChild(winnerDiv);
-        }, index * 500);
-      });
-    }
-
-    function startDraw() {
-      console.log('startDraw 実行開始');
-      const textarea = document.getElementById('nameInput');
-      const inputCount = document.getElementById('drawCount');
-      const allowDuplicates = document.getElementById('allowDuplicates').checked;
-      const showRanking = document.getElementById('showRanking').checked;
-      const customMessage = document.getElementById('customMessage').value.trim();
-      const loadingBar = document.getElementById('loadingBar');
-      const loadingBarFill = document.getElementById('loadingBarFill');
-      const resultDiv = document.getElementById('result');
-      const copyBtn = document.getElementById('copyBtn');
-      const shareBtn = document.getElementById('shareBtn');
-      const exportBtn = document.getElementById('exportBtn');
-      const imageBtn = document.getElementById('imageBtn');
-
-      let rawNames = textarea.value.trim().split('\n').map(n => n.trim()).filter(Boolean);
-      console.log('入力された名前:', rawNames);
-
-      if (!allowDuplicates) {
-        rawNames = [...new Set(rawNames)];
-      }
-
-      const count = parseInt(inputCount.value);
-
-      if (rawNames.length === 0) {
-        showModal('名前を入力してください。');
-        return;
-      }
-      if (isNaN(count) || count < 1 || (!allowDuplicates && count > rawNames.length)) {
-        showModal('抽選人数は1以上、かつ名前の数以下にしてください（重複許可時は除く）。');
-        return;
-      }
-
-      resultDiv.textContent = '';
-      copyBtn.style.display = 'none';
-      shareBtn.style.display = 'none';
-      exportBtn.style.display = 'none';
-      imageBtn.style.display = 'none';
-      loadingBar.style.display = 'block';
-      loadingBarFill.style.animation = 'none';
-      void loadingBarFill.offsetWidth;
-      loadingBarFill.style.animation = 'loading 3s ease-in-out forwards';
-
-      const stopAnimation = showDrawAnimation(rawNames);
-
-      setTimeout(() => {
-        try {
-          stopAnimation();
-          let winners = [];
-          if (allowDuplicates) {
-            for (let i = 0; i < count; i++) {
-              const randomIndex = Math.floor(Math.random() * rawNames.length);
-              winners.push(rawNames[randomIndex]);
-            }
-          } else {
-            const shuffled = [...rawNames].sort(() => 0.5 - Math.random());
-            winners = shuffled.slice(0, count);
-          }
-
-          console.log('当選者:', winners);
-          loadingBar.style.display = 'none';
-          showResult(winners, showRanking, customMessage);
-
-          const dataStr = base64urlEncode(JSON.stringify(winners));
-          if (dataStr) {
-            updateURL(dataStr);
-          }
-
-          copyBtn.style.display = 'inline-block';
-          shareBtn.style.display = 'inline-block';
-          exportBtn.style.display = 'inline-block';
-          imageBtn.style.display = 'inline-block';
-        } catch (e) {
-          console.error('抽選処理エラー:', e);
-          showModal('抽選中にエラーが発生しました。もう一度お試しください。');
-          loadingBar.style.display = 'none';
-          stopAnimation();
-        }
-      }, 3000);
-    }
-
-    function resetForm() {
-      const textarea = document.getElementById('nameInput');
-      const inputCount = document.getElementById('drawCount');
-      const customMessage = document.getElementById('customMessage');
-      const resultDiv = document.getElementById('result');
-      const copyBtn = document.getElementById('copyBtn');
-      const shareBtn = document.getElementById('shareBtn');
-      const exportBtn = document.getElementById('exportBtn');
-      const imageBtn = document.getElementById('imageBtn');
-      textarea.value = '';
-      inputCount.value = '1';
-      customMessage.value = '';
-      document.getElementById('allowDuplicates').checked = false;
-      document.getElementById('showRanking').checked = false;
-      resultDiv.textContent = '';
-      copyBtn.style.display = 'none';
-      shareBtn.style.display = 'none';
-      exportBtn.style.display = 'none';
-      imageBtn.style.display = 'none';
-      try {
-        if (window.location.protocol !== 'about:') {
-          window.history.replaceState(null, '', window.location.pathname);
-        }
-      } catch (e) {
-        console.error('リセット時のURLクリアエラー:', e);
-      }
-      updateNameCount();
-    }
-
-    function copyURL() {
-      try {
-        const url = window.location.href;
-        navigator.clipboard.writeText(url).then(() => {
-          showModal('URLをコピーしました！');
-        }).catch(() => {
-          showModal('コピーに失敗しました。手動でコピーしてください。');
-        });
-      } catch (e) {
-        console.error('URLコピーエラー:', e);
-        showModal('URLのコピーに失敗しました。');
-      }
-    }
-
-    function shareResult() {
-      try {
-        const url = window.location.href;
-        const text = 'くじ引き・抽選ツールで抽選した結果をチェック！';
-        if (navigator.share) {
-          navigator.share({
-            title: 'くじ引き・抽選ツール',
-            text: text,
-            url: url
-          }).catch(() => showModal('シェアに失敗しました。'));
-        } else {
-          showModal('このブラウザではシェア機能が使えません。URLをコピーしてシェアしてください。');
-        }
-      } catch (e) {
-        console.error('シェアエラー:', e);
-        showModal('シェア中にエラーが発生しました。');
-      }
-    }
-
-    function exportResult() {
-      try {
-        const resultDiv = document.getElementById('result');
-        const customMessage = document.getElementById('customMessage').value.trim();
-        const winners = Array.from(resultDiv.querySelectorAll('.winner-item')).map(div => div.textContent.replace(/^\d+位: /, '').replace('🎉 ', ''));
-        if (winners.length === 0) {
-          showModal('エクスポートする結果がありません。');
-          return;
-        }
-        const fileName = customMessage ? `${customMessage.replace(/\s+/g, '_')}_${new Date().toISOString().replace(/[:.]/g, '-')}` : `lottery_result_${new Date().toISOString().replace(/[:.]/g, '-')}`;
-        const csvContent = 'data:text/csv;charset=utf-8,' + winners.map(w => `"${w}"`).join('\n');
-        const encodedUri = encodeURI(csvContent);
-        const link = document.createElement('a');
-        link.setAttribute('href', encodedUri);
-        link.setAttribute('download', `${fileName}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      } catch (e) {
-        console.error('CSVエクスポートエラー:', e);
-        showModal('CSVのエクスポートに失敗しました。');
-      }
-    }
-
-    function downloadImage() {
-      try {
-        const resultDiv = document.getElementById('result');
-        const customMessage = document.getElementById('customMessage').value.trim();
-        if (!resultDiv.querySelectorAll('.winner-item').length) {
-          showModal('画像を生成する結果がありません。');
-          return;
-        }
-        const fileName = customMessage ? `${customMessage.replace(/\s+/g, '_')}_${new Date().toISOString().replace(/[:.]/g, '-')}` : `lottery_result_${new Date().toISOString().replace(/[:.]/g, '-')}`;
-        html2canvas(resultDiv).then(canvas => {
-          const link = document.createElement('a');
-          link.href = canvas.toDataURL('image/png');
-          link.download = `${fileName}.png`;
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-        }).catch(() => showModal('画像の生成に失敗しました。'));
-      } catch (e) {
-        console.error('画像生成エラー:', e);
-        showModal('画像の生成に失敗しました。');
-      }
-    }
-
-    // イベントリスナーの設定
-    function initializeEventListeners() {
-      console.log('イベントリスナー初期化開始');
-      document.getElementById('sampleBtn').addEventListener('click', insertSampleNames);
-      document.getElementById('startDrawBtn').addEventListener('click', startDraw);
-      document.getElementById('quickDraw1').addEventListener('click', () => setDrawCount(1));
-      document.getElementById('quickDraw2').addEventListener('click', () => setDrawCount(2));
-      document.getElementById('quickDraw3').addEventListener('click', () => setDrawCount(3));
-      document.getElementById('resetBtn').addEventListener('click', resetForm);
-      document.getElementById('copyBtn').addEventListener('click', copyURL);
-      document.getElementById('shareBtn').addEventListener('click', shareResult);
-      document.getElementById('exportBtn').addEventListener('click', exportResult);
-      document.getElementById('imageBtn').addEventListener('click', downloadImage);
-      document.getElementById('closeModalBtn').addEventListener('click', closeModal);
-      document.getElementById('nameInput').addEventListener('input', updateNameCount);
-      console.log('イベントリスナー初期化完了');
-    }
-
-    // ページ読み込み時に実行
-    window.onload = () => {
-      try {
-        console.log('ページ読み込み開始');
-        document.body.classList.add('loaded');
-        const dataStr = getParam('data');
-        const copyBtn = document.getElementById('copyBtn');
-        const shareBtn = document.getElementById('shareBtn');
-        const exportBtn = document.getElementById('exportBtn');
-        const imageBtn = document.getElementById('imageBtn');
-        if (dataStr) {
-          const decoded = base64urlDecode(dataStr);
-          if (decoded) {
-            const winners = JSON.parse(decoded);
-            if (Array.isArray(winners) && winners.length > 0) {
-              const showRanking = winners.some(w => /^\d+位: /.test(w));
-              showResult(winners, showRanking, '');
-              copyBtn.style.display = 'inline-block';
-              shareBtn.style.display = 'inline-block';
-              exportBtn.style.display = 'inline-block';
-              imageBtn.style.display = 'inline-block';
-            }
-          }
-        }
-        updateNameCount();
-        initializeEventListeners();
-        console.log('ページ読み込み完了');
-      } catch (e) {
-        console.error('ページ読み込みエラー:', e);
-        showModal('ページの初期化に失敗しました。');
-      }
-    };
-  </script>
-  <style>
-    body {
-      margin: 0;
-      padding: 2rem;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: linear-gradient(135deg, #f0f9ff, #cbebff);
-      color: #333;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      min-height: 100vh;
-      opacity: 0;
-      transition: opacity 0.5s ease-in;
-    }
-    body.loaded {
-      opacity: 1;
-    }
-    h1 {
-      font-size: 3rem;
-      margin-bottom: 1rem;
-      color: #007acc;
-      text-shadow: 0 0 10px rgba(0, 122, 204, 0.3);
-      animation: glow 2s ease-in-out infinite alternate;
-      transform: translateY(-20px);
-      opacity: 0;
-      animation: slideIn 0.5s ease-out forwards;
-    }
-    @keyframes slideIn {
-      to { transform: translateY(0); opacity: 1; }
-    }
-    @keyframes glow {
-      from { text-shadow: 0 0 10px rgba(0, 122, 204, 0.3); }
-      to { text-shadow: 0 0 20px rgba(0, 122, 204, 0.7); }
-    }
-    p {
-      font-size: 1.1rem;
-      color: #555;
-      margin-bottom: 1rem;
-      text-align: center;
-      max-width: 600px;
-      opacity: 0;
-      transform: translateY(20px);
-      animation: slideIn 0.5s ease-out 0.2s forwards;
-    }
-    #nameCount {
-      font-size: 1rem;
-      color: #007acc;
-      margin-bottom: 0.5rem;
-      opacity: 0;
-      animation: slideIn 0.5s ease-out 0.3s forwards;
-    }
-    textarea {
-      width: 90%;
-      max-width: 600px;
-      height: 150px;
-      padding: 1rem;
-      font-size: 1rem;
-      border: 2px solid #00aaff;
-      border-radius: 12px;
-      background-color: rgba(255, 255, 255, 0.95);
-      margin-bottom: 0.5rem;
-      resize: none;
-      transition: border-color 0.3s, transform 0.3s, box-shadow 0.3s;
-      opacity: 0;
-      animation: slideIn 0.5s ease-out 0.4s forwards;
-    }
-    textarea:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(0, 170, 255, 0.2);
-    }
-    textarea:focus {
-      border-color: #007acc;
-      outline: none;
-      box-shadow: 0 0 8px rgba(0, 122, 204, 0.4);
-    }
-    input[type="number"], input[type="text"] {
-      width: 150px;
-      padding: 0.5rem;
-      font-size: 1rem;
-      margin: 0.5rem;
-      border: 2px solid #00aaff;
-      border-radius: 8px;
-      transition: border-color 0.3s, transform 0.3s, box-shadow 0.3s;
-      opacity: 0;
-      animation: slideIn 0.5s ease-out 0.5s forwards;
-    }
-    input[type="number"]:hover, input[type="text"]:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(0, 170, 255, 0.2);
-    }
-    input[type="number"]:focus, input[type="text"]:focus {
-      border-color: #007acc;
-      outline: none;
-      box-shadow: 0 0 8px rgba(0, 122, 204, 0.4);
-    }
-    .options {
-      display: flex;
-      gap: 1rem;
-      margin-bottom: 1rem;
-      flex-wrap: wrap;
-      justify-content: center;
-      opacity: 0;
-      animation: slideIn 0.5s ease-out 0.6s forwards;
-    }
-    .options label {
-      font-size: 1rem;
-      color: #555;
-      transition: color 0.3s;
-    }
-    .options label:hover {
-      color: #007acc;
-    }
-    .button-group {
-      display: flex;
-      gap: 1rem;
-      flex-wrap: wrap;
-      justify-content: center;
-      opacity: 0;
-      animation: slideIn 0.5s ease-out 0.7s forwards;
-    }
-    button {
-      background: #00aaff;
-      color: white;
-      font-size: 1.2rem;
-      padding: 0.7rem 2rem;
-      border: none;
-      border-radius: 25px;
-      cursor: pointer;
-      transition: transform 0.2s, background 0.3s, box-shadow 0.3s;
-      box-shadow: 0 0 10px rgba(0, 170, 255, 0.3);
-      position: relative;
-      overflow: hidden;
-    }
-    button::after {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: -100%;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(
-        90deg,
-        transparent,
-        rgba(255, 255, 255, 0.2),
-        transparent
-      );
-      transition: left 0.4s;
-    }
-    button:hover::after {
-      left: 100%;
-    }
-    button:hover {
-      background: #007acc;
-      transform: translateY(-3px);
-      box-shadow: 0 6px 15px rgba(0, 122, 204, 0.4);
-    }
-    button:active {
-      transform: translateY(0);
-      box-shadow: 0 2px 5px rgba(0, 122, 204, 0.2);
-    }
-    button.reset { background: #ff5555; }
-    button.reset:hover { background: #cc3333; }
-    button.quick-draw { background: #55aa55; }
-    button.quick-draw:hover { background: #448844; }
-    button.sample { background: #ffaa00; }
-    button.sample:hover { background: #cc8800; }
-    #loadingBar {
-      width: 90%;
-      max-width: 400px;
-      height: 20px;
-      background: #eee;
-      border-radius: 10px;
-      overflow: hidden;
-      margin: 1rem 0;
-      display: none;
-      position: relative;
-      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-    }
-    #loadingBarFill {
-      width: 0;
-      height: 100%;
-      background: linear-gradient(90deg, #00ccff, #0099ff, #00ccff);
-      background-size: 200% 100%;
-      animation: loading 3s ease-in-out forwards, gradientShift 2s ease infinite;
-      position: relative;
-      overflow: hidden;
-    }
-    #loadingBarFill::after {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(
-        45deg,
-        rgba(255, 255, 255, 0.2) 25%,
-        transparent 25%,
-        transparent 50%,
-        rgba(255, 255, 255, 0.2) 50%,
-        rgba(255, 255, 255, 0.2) 75%,
-        transparent 75%,
-        transparent
-      );
-      background-size: 30px 30px;
-      animation: sparkle 1s linear infinite;
-    }
-    @keyframes gradientShift {
-      0% { background-position: 0% 50%; }
-      100% { background-position: 200% 50%; }
-    }
-    @keyframes sparkle {
-      0% { background-position: 0 0; }
-      100% { background-position: 30px 30px; }
-    }
-    @keyframes loading {
-      from { width: 0; }
-      to { width: 100%; }
-    }
-    #drawAnimation {
-      font-size: 1.5rem;
-      color: #003366;
-      margin: 1rem 0;
-      display: none;
-      text-align: center;
-      transition: opacity 0.3s;
-    }
-    #drawAnimation.animate-pulse {
-      animation: pulse 0.5s ease-in-out infinite;
-    }
-    @keyframes pulse {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.7; transform: scale(1.05); }
-    }
-    #result {
-      margin-top: 2rem;
-      font-size: 1.5rem;
-      color: #003366;
-      background: rgba(255, 255, 255, 0.9);
-      padding: 1rem 2rem;
-      border-radius: 15px;
-      box-shadow: 0 0 10px rgba(0, 122, 204, 0.2);
-      white-space: pre-line;
-      text-align: center;
-      opacity: 0;
-      animation: slideIn 0.5s ease-out forwards;
-    }
-    .result-message {
-      font-weight: bold;
-      margin-bottom: 1rem;
-      animation: bounce 0.5s ease-out;
-    }
-    .winner-item {
-      opacity: 0;
-      transform: translateY(30px) scale(0.8);
-      animation: bounceIn 0.6s ease-out forwards;
-      padding: 0.5rem;
-      margin: 0.2rem;
-      border-radius: 8px;
-      background: linear-gradient(45deg, #e6f3ff, #ffffff);
-      box-shadow: 0 0 5px rgba(0, 122, 204, 0.3);
-      transition: transform 0.2s;
-    }
-    .winner-item:hover {
-      transform: scale(1.02);
-    }
-    @keyframes bounceIn {
-      0% { opacity: 0; transform: translateY(30px) scale(0.8); }
-      60% { opacity: 1; transform: translateY(-10px) scale(1.05); }
-      100% { opacity: 1; transform: translateY(0) scale(1); }
-    }
-    @keyframes bounce {
-      0% { transform: scale(0.8); opacity: 0; }
-      60% { transform: scale(1.1); opacity: 1; }
-      100% { transform: scale(1); opacity: 1; }
-    }
-    #copyBtn, #shareBtn, #exportBtn, #imageBtn {
-      display: none;
-      margin-top: 1rem;
-      padding: 0.6rem 1.2rem;
-      font-size: 1rem;
-      border: none;
-      border-radius: 10px;
-      background: #00aaff;
-      color: #fff;
-      cursor: pointer;
-      box-shadow: 0 0 10px rgba(0, 170, 255, 0.3);
-      transition: background 0.3s, transform 0.2s, box-shadow 0.3s;
-      position: relative;
-      overflow: hidden;
-      opacity: 0;
-      animation: slideIn 0.5s ease-out forwards;
-    }
-    #copyBtn::after, #shareBtn::after, #exportBtn::after, #imageBtn::after {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: -100%;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(
-        90deg,
-        transparent,
-        rgba(255, 255, 255, 0.2),
-        transparent
-      );
-      transition: left 0.4s;
-    }
-    #copyBtn:hover::after, #shareBtn:hover::after, #exportBtn:hover::after, #imageBtn:hover::after {
-      left: 100%;
-    }
-    #copyBtn:hover, #shareBtn:hover, #exportBtn:hover, #imageBtn:hover {
-      background: #007acc;
-      transform: translateY(-3px);
-      box-shadow: 0 6px 15px rgba(0, 122, 204, 0.4);
-    }
-    #copyBtn:active, #shareBtn:active, #exportBtn:active, #imageBtn:active {
-      transform: translateY(0);
-      box-shadow: 0 2px 5px rgba(0, 122, 204, 0.2);
-    }
-    .modal {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.5);
-      justify-content: center;
-      align-items: center;
-      opacity: 0;
-      transition: opacity 0.3s ease;
-    }
-    .modal.modal-show {
-      opacity: 1;
-    }
-    .modal-content {
-      background: white;
-      padding: 2rem;
-      border-radius: 12px;
-      text-align: center;
-      box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
-      transform: scale(0.7);
-      transition: transform 0.3s ease;
-    }
-    .modal.modal-show .modal-content {
-      transform: scale(1);
-    }
-    .modal-content button {
-      margin-top: 1rem;
-    }
-    @media (max-width: 600px) {
-      h1 { font-size: 2rem; }
-      textarea, input[type="number"], input[type="text"] { width: 95%; }
-      button { font-size: 1rem; padding: 0.5rem 1.5rem; }
-      #result { font-size: 1.2rem; }
-      .options { flex-direction: column; }
-    }
-  </style>
+/* ============================
+   MODALS
+   =========================== */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:1000;align-items:center;justify-content:center;backdrop-filter:blur(4px);}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--modal-bg);border:1px solid var(--border2);border-radius:var(--radius-lg);padding:26px 24px;width:100%;max-width:480px;margin:20px;animation:modalIn .25s cubic-bezier(.34,1.3,.64,1) both;}
+@keyframes modalIn{from{transform:scale(.92) translateY(10px);opacity:0}to{transform:scale(1) translateY(0);opacity:1}}
+.modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.modal-title{font-family:'Kaisei Decol',serif;font-size:17px;font-weight:700;color:var(--text);}
+.modal-close{width:28px;height:28px;display:flex;align-items:center;justify-content:center;background:var(--surface2);border:1px solid var(--border2);border-radius:6px;cursor:pointer;font-size:14px;color:var(--text2);transition:all .2s;}
+.modal-close:hover{border-color:var(--red);color:var(--red);}
+.share-desc{font-size:13px;color:var(--text2);margin-bottom:13px;line-height:1.7;}
+.share-options{display:grid;gap:7px;margin-bottom:14px;}
+.share-option{display:flex;align-items:center;gap:9px;padding:10px 12px;background:var(--surface2);border:1px solid var(--border2);border-radius:10px;cursor:pointer;transition:all .2s;}
+.share-option input[type="checkbox"]{accent-color:var(--accent);width:15px;height:15px;}
+.share-option-label{font-size:13px;color:var(--text);font-weight:500;}
+.share-option-sub{font-size:11px;color:var(--text3);}
+.share-option:has(input:checked){border-color:var(--accent);}
+.url-box{display:flex;gap:7px;}
+.url-input{flex:1;background:var(--surface2);border:1px solid rgba(247,201,72,.3);border-radius:8px;padding:8px 11px;font-size:11px;font-family:'Space Mono',monospace;color:var(--text2);outline:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.copy-btn{padding:8px 14px;background:var(--accent);color:#0a0a12;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;transition:all .2s;font-family:'Noto Sans JP',sans-serif;white-space:nowrap;}
+.copy-btn:hover{background:#ffd45e;}
+.copy-btn.copied{background:var(--green);color:#fff;}
+.share-generate-btn{width:100%;padding:11px;background:var(--accent);color:#0a0a12;border:none;border-radius:var(--radius);font-family:'Kaisei Decol',serif;font-size:15px;font-weight:700;cursor:pointer;transition:all .2s;margin-bottom:11px;}
+.share-generate-btn:hover{background:#ffd45e;}
+/* ---- TOAST ---- */
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(14px);background:var(--accent);color:#0a0a12;padding:8px 18px;border-radius:30px;font-size:13px;font-weight:700;font-family:'Noto Sans JP',sans-serif;opacity:0;transition:all .3s;pointer-events:none;z-index:2000;white-space:nowrap;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+/* ---- CONFETTI ---- */
+.confetti-container{position:fixed;inset:0;pointer-events:none;z-index:999;}
+.confetti-piece{position:absolute;animation:confettiFall linear both;}
+@keyframes confettiFall{0%{transform:translateY(-20px) rotate(0);opacity:1}100%{transform:translateY(110vh) rotate(720deg);opacity:0}}
+/* ---- WEIGHT PANEL ---- */
+.weight-panel{display:none;background:var(--surface);border:1px solid var(--accent);border-radius:var(--radius-lg);padding:18px 20px;}
+.weight-panel.open{display:block;animation:slideIn .3s ease;}
+.weight-list{display:flex;flex-direction:column;gap:5px;max-height:180px;overflow-y:auto;margin-top:10px;}
+.weight-list::-webkit-scrollbar{width:4px;}
+.weight-list::-webkit-scrollbar-thumb{background:var(--surface3);border-radius:2px;}
+.weight-row{display:flex;align-items:center;gap:9px;padding:6px 9px;background:var(--surface2);border-radius:8px;font-size:13px;color:var(--text);}
+.weight-name{flex:1;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.weight-input{width:52px;background:var(--bg);border:1px solid var(--border2);border-radius:6px;padding:3px 7px;font-size:12px;font-family:'Space Mono',monospace;color:var(--text);text-align:center;outline:none;}
+.weight-input:focus{border-color:var(--accent);}
+.weight-bar{width:44px;height:5px;background:var(--surface3);border-radius:3px;overflow:hidden;}
+.weight-bar-fill{height:100%;background:var(--accent);border-radius:3px;transition:width .3s;}
+.secret-badge{font-size:9px;background:var(--accent);color:#0a0a12;padding:1px 7px;border-radius:10px;font-weight:700;letter-spacing:.05em;vertical-align:middle;margin-left:5px;}
+/* ---- EASTER EGG ---- */
+.easter-overlay{display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.85);align-items:center;justify-content:center;flex-direction:column;gap:18px;backdrop-filter:blur(8px);}
+.easter-overlay.show{display:flex;animation:fadeInBig .4s ease both;}
+@keyframes fadeInBig{from{opacity:0;transform:scale(.8)}to{opacity:1;transform:scale(1)}}
+.easter-content{text-align:center;animation:floatUp 2s ease-in-out infinite alternate;}
+@keyframes floatUp{from{transform:translateY(0)}to{transform:translateY(-12px)}}
+.easter-emoji{font-size:70px;line-height:1;}
+.easter-title{font-family:'Kaisei Decol',serif;font-size:26px;font-weight:700;color:var(--accent);margin-top:14px;}
+.easter-sub{font-size:13px;color:var(--text2);margin-top:6px;}
+.easter-close{padding:9px 26px;background:var(--accent);color:#0a0a12;border:none;border-radius:30px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;transition:all .2s;}
+.easter-close:hover{transform:scale(1.05);}
+[data-party="1"]{animation:partyHue 3s linear infinite;}
+@keyframes partyHue{0%,100%{filter:hue-rotate(0)}50%{filter:hue-rotate(180deg)}}
+/* ---- QUICK SPIN ---- */
+.quickspin-overlay{display:none;position:fixed;inset:0;z-index:500;background:var(--bg);align-items:center;justify-content:center;flex-direction:column;gap:20px;}
+.quickspin-overlay.show{display:flex;}
+.slot-reel{width:120px;height:64px;background:var(--surface2);border:2px solid var(--accent);border-radius:10px;overflow:hidden;display:flex;align-items:center;justify-content:center;font-family:'Kaisei Decol',serif;font-size:20px;font-weight:700;color:var(--accent);position:relative;}
+.slot-reel-inner{display:flex;flex-direction:column;align-items:center;position:absolute;}
+.slot-item{height:64px;display:flex;align-items:center;justify-content:center;width:120px;padding:0 7px;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.qs-exit-btn{padding:9px 22px;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius);color:var(--text2);font-size:13px;cursor:pointer;font-family:'Noto Sans JP',sans-serif;transition:all .2s;}
+.qs-exit-btn:hover{border-color:var(--accent);color:var(--accent);}
+.qs-winner-label{font-family:'Kaisei Decol',serif;font-size:28px;font-weight:700;color:var(--accent);text-align:center;min-height:40px;}
+/* ---- RESPONSIVE ---- */
+@media(max-width:780px){
+.two-col,.three-col{grid-template-columns:1fr;}
+.randomizer-grid{grid-template-columns:1fr;}
+.header{padding:12px 14px;}
+.tab-nav{padding:12px 10px 0;gap:2px;}
+.tab-btn{padding:7px 11px;font-size:12px;}
+.tab-page{padding:18px 12px 40px;}
+.result-winner{font-size:26px;}
+.timer-clock{font-size:44px;}
+}
+</style>
 </head>
 <body>
-  <h1>くじ引き・抽選ツール 🎉</h1>
-  <p>名前を1行ずつ入力して、抽選人数を選んで「抽選開始」を押してください！</p>
-  <div class="options">
-    <label><input type="checkbox" id="allowDuplicates"> 重複を許可（同じ人が複数回当選可能）</label>
-    <label><input type="checkbox" id="showRanking"> 順位を表示（1位、2位…）</label>
-    <label>カスタムメッセージ: <input type="text" id="customMessage" placeholder="例: 豪華賞品ゲット！"></label>
-  </div>
-  <textarea id="nameInput" placeholder="例：
-ユーザー1
-ユーザー2
-ユーザー3"></textarea>
-  <div id="nameCount">入力人数: 0人</div>
-  <div class="button-group">
-    <button id="sampleBtn" class="sample">サンプル名を挿入</button>
-  </div>
-  <label>抽選人数: <input type="number" id="drawCount" min="1" value="1" /></label>
-  <div class="button-group">
-    <button id="startDrawBtn">抽選開始</button>
-    <button id="quickDraw1" class="quick-draw">1人抽選</button>
-    <button id="quickDraw2" class="quick-draw">2人抽選</button>
-    <button id="quickDraw3" class="quick-draw">3人抽選</button>
-    <button id="resetBtn" class="reset">リセット</button>
-  </div>
 
-  <div id="loadingBar">
-    <div id="loadingBarFill"></div>
-  </div>
-  <div id="drawAnimation"></div>
+<div class="confetti-container" id="confetti"></div>
+<div class="toast" id="toast"></div>
 
-  <div id="result"></div>
-  <div class="button-group">
-    <button id="copyBtn">結果URLをコピー</button>
-    <button id="shareBtn">SNSでシェア</button>
-    <button id="exportBtn">CSVでエクスポート</button>
-    <button id="imageBtn">結果を画像で保存</button>
+<div class="easter-overlay" id="easter-overlay">
+  <div class="easter-content">
+    <div class="easter-emoji">🎊</div>
+    <div class="easter-title" id="easter-title">隠しコマンドを発見！</div>
+    <div class="easter-sub" id="easter-sub">↑↑↓↓←→←→BA — おめでとう！</div>
   </div>
+  <button class="easter-close" onclick="closeEaster()" id="easter-close-btn">閉じる</button>
+</div>
 
-  <div id="modal" class="modal">
-    <div class="modal-content">
-      <p id="modalMessage"></p>
-      <button id="closeModalBtn">閉じる</button>
+<div class="quickspin-overlay" id="qs-overlay">
+  <div style="font-family:'Kaisei Decol',serif;font-size:15px;color:var(--text2);" id="qs-label">🎰 スロット抽選</div>
+  <div style="display:flex;gap:10px;align-items:center;" id="slot-container"></div>
+  <div class="qs-winner-label" id="qs-winner"></div>
+  <button class="qs-exit-btn" id="qs-exit-btn" onclick="closeQuickSpin()">← 戻る</button>
+</div>
+
+<div class="modal-overlay" id="share-modal" onclick="closeShareModal(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="modal-title">🔗 共有リンクを作成</span>
+      <button class="modal-close" onclick="closeModal('share-modal')">✕</button>
+    </div>
+    <p class="share-desc" id="modal-desc">共有したい情報を選んでURLを生成してください。</p>
+    <div class="share-options">
+      <label class="share-option"><input type="checkbox" id="share-entries" checked><div><div class="share-option-label" id="sl-entries">参加者リスト</div><div class="share-option-sub" id="sl-entries-sub">入力した名前を共有</div></div></label>
+      <label class="share-option"><input type="checkbox" id="share-settings" checked><div><div class="share-option-label" id="sl-settings">設定</div><div class="share-option-sub" id="sl-settings-sub">当選者数・オプションを共有</div></div></label>
+      <label class="share-option"><input type="checkbox" id="share-lang" checked><div><div class="share-option-label" id="sl-lang">言語</div><div class="share-option-sub" id="sl-lang-sub">現在の言語設定を共有</div></div></label>
+    </div>
+    <button class="share-generate-btn" id="btn-gen-url" onclick="generateShareUrl()">URLを生成する</button>
+    <div class="url-box" id="url-box" style="display:none">
+      <input class="url-input" id="share-url-input" readonly>
+      <button class="copy-btn" id="copy-btn" onclick="copyShareUrl()">コピー</button>
     </div>
   </div>
+</div>
 
-  <canvas id="resultCanvas" style="display: none;"></canvas>
+<header class="header">
+  <div style="display:flex;align-items:center;gap:9px;">
+    <div class="logo">
+      <div class="logo-icon" id="logo-icon" onclick="logoClickSecret()">🎯</div>
+      <span id="logo-text">ギャザーキット</span>
+    </div>
+  </div>
+  <div class="hctrl">
+    <div class="pill-grp">
+      <button class="pill-btn active" onclick="setLang('ja')">日本語</button>
+      <button class="pill-btn" onclick="setLang('en')">English</button>
+    </div>
+    <button class="icon-btn" id="theme-btn" onclick="toggleTheme()" title="テーマ">🌙</button>
+    <button class="icon-btn" onclick="openModal('share-modal')" title="共有">🔗</button>
+  </div>
+</header>
+
+<nav class="tab-nav">
+  <button class="tab-btn active" onclick="switchTab('lottery')" id="tab-btn-lottery"><span class="tab-icon">🎲</span><span id="tbn-lottery">くじ引き</span></button>
+  <button class="tab-btn" onclick="switchTab('team')" id="tab-btn-team"><span class="tab-icon">👥</span><span id="tbn-team">チーム分け</span></button>
+  <button class="tab-btn" onclick="switchTab('order')" id="tab-btn-order"><span class="tab-icon">🔢</span><span id="tbn-order">順番決め</span></button>
+  <button class="tab-btn" onclick="switchTab('timer')" id="tab-btn-timer"><span class="tab-icon">⏱</span><span id="tbn-timer">タイマー</span></button>
+  <button class="tab-btn" onclick="switchTab('random')" id="tab-btn-random"><span class="tab-icon">🎰</span><span id="tbn-random">コイン・サイコロ</span></button>
+  <button class="tab-btn" onclick="switchTab('checklist')" id="tab-btn-checklist"><span class="tab-icon">✅</span><span id="tbn-checklist">チェックリスト</span></button>
+</nav>
+
+<div class="tab-page active" id="page-lottery">
+  <div class="two-col">
+    <div style="display:flex;flex-direction:column;gap:18px;">
+      <div class="panel">
+        <div class="panel-title" id="t-entries">参加者リスト</div>
+        <textarea class="ent-input" id="entries-input" placeholder="ユーザー1&#10;ユーザー2&#10;ユーザー3" oninput="updateCount();buildWeightRows();"></textarea>
+        <div class="input-hint" id="hint-text">改行区切りで入力（1行=1名）</div>
+        <div class="entries-actions">
+          <button class="small-btn" id="btn-load-sample" onclick="loadSample()">サンプル</button>
+          <button class="small-btn" id="btn-clear-entries" onclick="clearEntries()">クリア</button>
+          <button class="small-btn" id="btn-sort-entries" onclick="sortEntries()">並び替え</button>
+          <button class="small-btn" id="btn-dedup-entries" onclick="dedupEntries()">重複削除</button>
+        </div>
+        <div class="count-bar">
+          <span class="count-lbl" id="t-count">参加者数</span>
+          <span class="count-num" id="count-num">0</span>
+        </div>
+        <div class="prog-wrap" id="progress-wrap" style="display:none"><div class="prog-bar" id="progress-bar"></div></div>
+      </div>
+
+      <div class="weight-panel" id="weight-panel">
+        <div class="panel-title" id="t-weight-title">重み設定 <span class="secret-badge" id="secret-badge-text">SECRET</span></div>
+        <div style="font-size:12px;color:var(--text3);" id="t-weight-desc">各参加者の当選確率を調整。数字が大きいほど当選しやすくなります。</div>
+        <div class="weight-list" id="weight-list"></div>
+        <div style="font-size:11px;color:var(--text3);margin-top:6px;" id="t-weight-tip">💡 全員1のとき均等抽選</div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title" id="t-settings">設定</div>
+        <div class="settings-grid">
+          <div class="setting-row">
+            <div><div class="setting-lbl" id="t-num-draw">当選者数</div><div class="setting-sub" id="t-num-draw-sub">何人を選ぶか</div></div>
+            <input class="num-input" type="number" id="num-draw" value="1" min="1" max="999">
+          </div>
+          <div class="divider" style="margin:2px 0"></div>
+          <div class="setting-row"><div><div class="setting-lbl" id="t-no-duplicate">重複なし</div><div class="setting-sub" id="t-no-duplicate-sub">同じ人を2回選ばない</div></div><label class="toggle-switch"><input type="checkbox" id="no-duplicate" checked><span class="toggle-slider"></span></label></div>
+          <div class="setting-row"><div><div class="setting-lbl" id="t-exclude-prev">過去当選者を除外</div><div class="setting-sub" id="t-exclude-prev-sub">履歴から除外する</div></div><label class="toggle-switch"><input type="checkbox" id="exclude-prev"><span class="toggle-slider"></span></label></div>
+          <div class="setting-row"><div><div class="setting-lbl" id="t-confetti">紙吹雪エフェクト</div><div class="setting-sub" id="t-confetti-sub">当選時アニメーション</div></div><label class="toggle-switch"><input type="checkbox" id="show-confetti" checked><span class="toggle-slider"></span></label></div>
+        </div>
+        <button class="draw-btn" id="draw-btn" onclick="drawLottery()"><span id="t-draw-btn">🎲　抽選を開始する</span></button>
+        <button class="secondary-btn" onclick="resetAll()"><span id="t-reset-btn">🔄　リセット</span></button>
+      </div>
+    </div>
+
+    <div class="right-col">
+      <div class="lottery-stage">
+        <div class="stage-bg"></div>
+        <div class="stage-idle" id="stage-idle"><div class="stage-idle-icon">🎰</div><div class="stage-idle-text" id="t-idle">参加者を入力して抽選を開始してください</div></div>
+        <div class="spinning" id="stage-spinning">
+          <div class="spin-wheel"><svg viewBox="0 0 80 80" fill="none" width="68" height="68"><circle cx="40" cy="40" r="36" stroke="#f7c948" stroke-width="3" stroke-dasharray="60 167" stroke-linecap="round"/><circle cx="40" cy="40" r="24" stroke="#e8a020" stroke-width="2" stroke-dasharray="30 121" stroke-linecap="round"/><circle cx="40" cy="40" r="12" fill="#f7c948" opacity="0.3"/></svg></div>
+          <div class="spin-text" id="t-spinning">抽選中...</div>
+        </div>
+        <div class="result-display" id="stage-result">
+          <div class="result-badge" id="result-badge">1/1</div>
+          <div class="result-winner" id="result-winner" style="display:none"></div>
+          <div class="result-multi" id="result-multi" style="display:none"></div>
+        </div>
+      </div>
+      <div class="history-panel">
+        <div class="history-header">
+          <div class="panel-title" id="t-history" style="margin-bottom:0">抽選履歴</div>
+          <button class="clear-history-btn" id="btn-clear-history" onclick="clearHistory()">履歴をクリア</button>
+        </div>
+        <div class="history-list" id="history-list"><div class="no-history" id="t-no-history">まだ抽選履歴がありません</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="tab-page" id="page-team">
+  <div class="two-col">
+    <div style="display:flex;flex-direction:column;gap:18px;">
+      <div class="panel">
+        <div class="panel-title" id="t2-members">メンバーリスト</div>
+        <textarea class="ent-input" id="team-input" placeholder="ユーザー1&#10;ユーザー2&#10;ユーザー3&#10;ユーザー4" style="min-height:160px;"></textarea>
+        <div class="input-hint" id="t2-hint">改行区切りで入力</div>
+        <div class="entries-actions">
+          <button class="small-btn" onclick="loadTeamSample()" id="t2-load-sample">サンプル</button>
+          <button class="small-btn" onclick="document.getElementById('team-input').value='';updateTeamCount();" id="t2-clear">クリア</button>
+        </div>
+        <div class="count-bar"><span class="count-lbl" id="t2-count-lbl">メンバー数</span><span class="count-num" id="team-count-num">0</span></div>
+      </div>
+      <div class="panel">
+        <div class="panel-title" id="t2-settings">チーム設定</div>
+        <div class="settings-grid">
+          <div class="setting-row">
+            <div><div class="setting-lbl" id="t2-mode-lbl">分け方</div></div>
+            <select class="select-input" id="team-mode" style="width:auto;min-width:130px;">
+              <option value="bycount" id="t2-opt-bycount">チーム数で分ける</option>
+              <option value="bysize" id="t2-opt-bysize">人数で分ける</option>
+            </select>
+          </div>
+          <div class="setting-row">
+            <div><div class="setting-lbl" id="t2-num-lbl">数</div><div class="setting-sub" id="t2-num-sub">チーム数 または 1チームの人数</div></div>
+            <input class="num-input" type="number" id="team-num" value="2" min="2" max="99">
+          </div>
+          <div class="setting-row"><div><div class="setting-lbl" id="t2-shuffle-lbl">シャッフル</div><div class="setting-sub" id="t2-shuffle-sub">メンバーをランダムに並べる</div></div><label class="toggle-switch"><input type="checkbox" id="team-shuffle" checked><span class="toggle-slider"></span></label></div>
+          <div class="setting-row"><div><div class="setting-lbl" id="t2-balance-lbl">人数均等化</div><div class="setting-sub" id="t2-balance-sub">できるだけ同じ人数にする</div></div><label class="toggle-switch"><input type="checkbox" id="team-balance" checked><span class="toggle-slider"></span></label></div>
+        </div>
+        <button class="draw-btn" onclick="divideTeams()" id="t2-draw-btn">👥　チームを分ける</button>
+      </div>
+    </div>
+    <div>
+      <div class="panel">
+        <div class="panel-title" id="t2-result">結果</div>
+        <div id="team-result-area" style="color:var(--text3);font-size:14px;text-align:center;padding:24px 0;">チームを分けると結果がここに表示されます</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="tab-page" id="page-order">
+  <div class="two-col">
+    <div style="display:flex;flex-direction:column;gap:18px;">
+      <div class="panel">
+        <div class="panel-title" id="t3-members">メンバーリスト</div>
+        <textarea class="ent-input" id="order-input" placeholder="ユーザー1&#10;ユーザー2&#10;ユーザー3" style="min-height:160px;"></textarea>
+        <div class="entries-actions">
+          <button class="small-btn" onclick="loadOrderSample()" id="t3-load-sample">サンプル</button>
+          <button class="small-btn" onclick="document.getElementById('order-input').value='';" id="t3-clear">クリア</button>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-title" id="t3-settings">設定</div>
+        <div class="settings-grid">
+          <div class="setting-row"><div><div class="setting-lbl" id="t3-reverse-lbl">逆順も生成</div><div class="setting-sub" id="t3-reverse-sub">後ろから数えた順番も表示</div></div><label class="toggle-switch"><input type="checkbox" id="order-reverse"><span class="toggle-slider"></span></label></div>
+        </div>
+        <button class="draw-btn" onclick="shuffleOrder()" id="t3-draw-btn">🔀　順番をシャッフル</button>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-title" id="t3-result">順番</div>
+      <div id="order-result-area">
+        <div style="color:var(--text3);font-size:14px;text-align:center;padding:24px 0;">シャッフルすると順番がここに表示されます</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="tab-page" id="page-timer">
+  <div class="two-col">
+    <div style="display:flex;flex-direction:column;gap:18px;">
+      <div class="panel">
+        <div class="panel-title" id="t4-preset-lbl">クイックプリセット</div>
+        <div class="timer-presets" id="timer-presets">
+          <button class="preset-btn" onclick="setTimerPreset(30)">30秒</button>
+          <button class="preset-btn" onclick="setTimerPreset(60)">1分</button>
+          <button class="preset-btn" onclick="setTimerPreset(180)">3分</button>
+          <button class="preset-btn" onclick="setTimerPreset(300)">5分</button>
+          <button class="preset-btn" onclick="setTimerPreset(600)">10分</button>
+          <button class="preset-btn" onclick="setTimerPreset(900)">15分</button>
+          <button class="preset-btn" onclick="setTimerPreset(1800)">30分</button>
+        </div>
+        <div class="panel-title" id="t4-custom-lbl">カスタム時間</div>
+        <div style="display:flex;gap:8px;align-items:center;justify-content:center;">
+          <div style="text-align:center;"><input class="num-input" type="number" id="timer-h" value="0" min="0" max="99" style="width:60px;"><div style="font-size:11px;color:var(--text3);margin-top:3px;" id="t4-h">時間</div></div>
+          <div style="font-size:20px;color:var(--text3);padding-bottom:14px;">:</div>
+          <div style="text-align:center;"><input class="num-input" type="number" id="timer-m" value="5" min="0" max="59" style="width:60px;"><div style="font-size:11px;color:var(--text3);margin-top:3px;" id="t4-m">分</div></div>
+          <div style="font-size:20px;color:var(--text3);padding-bottom:14px;">:</div>
+          <div style="text-align:center;"><input class="num-input" type="number" id="timer-s" value="0" min="0" max="59" style="width:60px;"><div style="font-size:11px;color:var(--text3);margin-top:3px;" id="t4-s">秒</div></div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-title" id="t4-sound-lbl">サウンド・通知</div>
+        <div class="settings-grid">
+          <div class="setting-row"><div><div class="setting-lbl" id="t4-beep-lbl">終了ブザー</div><div class="setting-sub" id="t4-beep-sub">時間切れ時に音を鳴らす</div></div><label class="toggle-switch"><input type="checkbox" id="timer-beep" checked><span class="toggle-slider"></span></label></div>
+          <div class="setting-row"><div><div class="setting-lbl" id="t4-vol-lbl">ブザー音量</div></div>
+            <div class="volume-row">
+              <span style="font-size:12px;color:var(--text3);">🔈</span>
+              <input type="range" class="volume-slider" id="timer-volume" min="0" max="1" step="0.05" value="0.3" oninput="updateVolumeLabel()">
+              <span style="font-size:11px;color:var(--text2);font-family:'Space Mono',monospace;min-width:28px;" id="vol-pct">30%</span>
+            </div>
+          </div>
+          <div class="setting-row"><div><div class="setting-lbl" id="t4-lap-lbl">ラップ記録</div><div class="setting-sub" id="t4-lap-sub">ラップタイムを記録する</div></div><label class="toggle-switch"><input type="checkbox" id="timer-lap" checked><span class="toggle-slider"></span></label></div>
+        </div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="timer-display">
+        <div class="timer-clock" id="timer-display-clock">05:00</div>
+        <div class="timer-label" id="timer-mode-label">カウントダウン</div>
+      </div>
+      <div class="timer-progress"><div class="timer-progress-bar" id="timer-progress-bar" style="width:100%"></div></div>
+      <div class="timer-controls">
+        <button class="timer-btn primary" id="timer-start-btn" onclick="timerToggle()">▶ スタート</button>
+        <button class="timer-btn" id="timer-reset-btn" onclick="timerReset()">↺ リセット</button>
+        <button class="timer-btn" id="timer-lap-btn" onclick="timerLap()">◎ ラップ</button>
+        <button class="timer-btn" id="timer-mode-btn" onclick="switchTimerMode()">⇄ ストップウォッチ</button>
+        <button class="timer-btn danger" id="timer-stop-sound-btn" onclick="stopBuzzer()" style="display:none;width:100%;margin-top:8px;font-weight:700;">⏹ 音を止める</button>
+      </div>
+      <div class="buzzer-log" id="buzzer-log"></div>
+    </div>
+  </div>
+</div>
+
+<div class="tab-page" id="page-random">
+  <div class="randomizer-grid">
+    <div class="rand-card">
+      <div class="panel-title" id="t5-coin">コイントス</div>
+      <span class="rand-display" id="coin-display">🪙</span>
+      <div class="rand-result-text" id="coin-result"></div>
+      <div class="rand-history" id="coin-history"></div>
+      <button class="draw-btn" style="margin-top:14px;" onclick="tossCoin()" id="t5-coin-btn">コインを投げる</button>
+    </div>
+    <div class="rand-card">
+      <div class="panel-title" id="t5-dice">サイコロ</div>
+      <div style="display:flex;gap:8px;justify-content:center;margin-bottom:4px;flex-wrap:wrap;" id="dice-displays"></div>
+      <div class="rand-result-text" id="dice-result"></div>
+      <div style="display:flex;align-items:center;gap:8px;justify-content:center;margin:10px 0 6px;">
+        <span style="font-size:12px;color:var(--text3);" id="t5-dice-count">個数:</span>
+        <input class="num-input" type="number" id="dice-count" value="1" min="1" max="6" style="width:56px;">
+        <span style="font-size:12px;color:var(--text3);">面:</span>
+        <select class="select-input" id="dice-faces" style="width:80px;">
+          <option value="4">4面</option>
+          <option value="6" selected>6面</option>
+          <option value="8">8面</option>
+          <option value="10">10面</option>
+          <option value="12">12面</option>
+          <option value="20">20面</option>
+        </select>
+      </div>
+      <div class="rand-history" id="dice-history"></div>
+      <button class="draw-btn" style="margin-top:10px;" onclick="rollDice()" id="t5-dice-btn">サイコロを振る</button>
+    </div>
+    <div class="rand-card">
+      <div class="panel-title" id="t5-num">乱数生成</div>
+      <div class="num-range-row">
+        <input type="number" id="rand-min" value="1">
+        <span class="num-range-sep">〜</span>
+        <input type="number" id="rand-max" value="100">
+      </div>
+      <div class="big-num" id="rand-num-result" style="opacity:.3;animation:none;">—</div>
+      <div class="rand-history" id="rand-history"></div>
+      <button class="draw-btn" onclick="generateRandNum()" id="t5-num-btn">数を生成する</button>
+    </div>
+    <div class="rand-card">
+      <div class="panel-title" id="t5-picker">ランダムピッカー</div>
+      <textarea class="ent-input" id="picker-input" placeholder="ラーメン&#10;カレー&#10;寿司&#10;ピザ" style="min-height:90px;font-size:13px;"></textarea>
+      <div class="rand-result-text" style="margin:10px 0;min-height:28px;font-size:18px;" id="picker-result"></div>
+      <button class="draw-btn" onclick="runPicker()" id="t5-picker-btn">ランダムに選ぶ</button>
+    </div>
+  </div>
+</div>
+
+<div class="tab-page" id="page-checklist">
+  <div class="two-col">
+    <div style="display:flex;flex-direction:column;gap:18px;">
+      <div class="panel">
+        <div class="panel-title" id="t6-template">テンプレート</div>
+        <div class="checklist-templates" id="checklist-templates"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-title" id="t6-add">アイテムを追加</div>
+        <div class="check-add-row">
+          <input class="text-input" type="text" id="check-new-input" placeholder="新しいアイテム" onkeydown="if(event.key==='Enter')addCheckItem()">
+          <button class="action-btn" onclick="addCheckItem()" id="t6-add-btn">追加</button>
+        </div>
+        <div style="margin-top:10px;display:flex;gap:7px;flex-wrap:wrap;">
+          <button class="action-btn secondary" onclick="checkAll()" id="t6-check-all">すべてチェック</button>
+          <button class="action-btn secondary" onclick="uncheckAll()" id="t6-uncheck-all">全解除</button>
+          <button class="action-btn danger" onclick="clearChecklist()" id="t6-clear">リストをクリア</button>
+        </div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-title" id="t6-list">チェックリスト</div>
+      <div class="check-stats">
+        <div class="check-stat" id="t6-progress-text"><span id="check-done-count">0</span> / <span id="check-total-count">0</span></div>
+        <div class="check-prog"><div class="check-prog-bar" id="check-prog-bar" style="width:0%"></div></div>
+        <div class="check-stat" id="check-pct-text">0%</div>
+      </div>
+      <div class="checklist-area" id="checklist-area">
+        <div style="color:var(--text3);font-size:14px;text-align:center;padding:20px 0;">アイテムを追加してください</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* =====================================================
+   STATE & CONFIG
+   ===================================================== */
+let lang = 'ja', theme = 'dark';
+let drawHistory = [], allWinners = new Set(), drawCount = 0;
+let weights = {};
+let logoClickCount = 0, logoClickTimer = null;
+let timerInterval = null, timerRemaining = 0, timerTotal = 0;
+let timerRunning = false, timerMode = 'countdown'; // 'countdown' | 'stopwatch'
+let stopwatchMs = 0, stopwatchStart = 0;
+let lapLog = [];
+let checkItems = [];
+let coinHistory = [], diceHistoryLog = [], randHistory = [];
+let buzzerInterval = null; // ループ再生用インターバル
+
+const COLORS = ['#5b8dee','#e05c5c','#4caf7d','#9b7ff5','#f7c948','#e86c4d','#3bbfad','#e86ca0'];
+const DICE_EMOJI = {4:'🔷',6:'🎲',8:'🔶',10:'🔹',12:'🔸',20:'🎯'};
+
+/* =====================================================
+   I18N
+   ===================================================== */
+const i18n = {
+  ja: {
+    'logo-text':'ギャザーキット / GatherKit',
+    'tbn-lottery':'くじ引き','tbn-team':'チーム分け','tbn-order':'順番決め',
+    'tbn-timer':'タイマー','tbn-random':'コイン・サイコロ','tbn-checklist':'チェックリスト',
+    't-entries':'参加者リスト','hint-text':'改行区切りで入力（1行=1名）',
+    'btn-load-sample':'サンプル','btn-clear-entries':'クリア',
+    'btn-sort-entries':'並び替え','btn-dedup-entries':'重複削除',
+    't-count':'参加者数','t-settings':'設定',
+    't-num-draw':'当選者数','t-num-draw-sub':'何人を選ぶか',
+    't-no-duplicate':'重複なし','t-no-duplicate-sub':'同じ人を2回選ばない',
+    't-exclude-prev':'過去当選者を除外','t-exclude-prev-sub':'履歴から除外する',
+    't-confetti':'紙吹雪エフェクト','t-confetti-sub':'当選時アニメーション',
+    't-draw-btn':'🎲　抽選を開始する','t-reset-btn':'🔄　リセット',
+    't-idle':'参加者を入力して抽選を開始してください','t-spinning':'抽選中...',
+    't-history':'抽選履歴','btn-clear-history':'履歴をクリア',
+    't-no-history':'まだ抽選履歴がありません',
+    'sample-entries':'ユーザー1\nユーザー2\nユーザー3\nユーザー4\nユーザー5',
+    'draw-btn-spinning':'🎲　抽選中...','draw-error-empty':'参加者を入力してください',
+    'draw-error-few':'参加者が当選者数より少ないです',
+    'draw-error-all-drawn':'全員が既に当選しています。リセットするか「過去当選者を除外」をオフにしてください。',
+    'result-badge':(w,t)=>`当選 ${w} 名 / 全 ${t} 名`,
+    'modal-title':'🔗 共有リンクを作成','modal-desc':'共有したい情報を選んでURLを生成してください。',
+    'sl-entries':'参加者リスト','sl-entries-sub':'入力した名前を共有',
+    'sl-settings':'設定','sl-settings-sub':'当選者数・オプションを共有',
+    'sl-lang':'言語','sl-lang-sub':'現在の言語設定を共有',
+    'btn-gen-url':'URLを生成する','t-copy':'コピー','t-copied':'コピーしました！',
+    'toast-copied':'✓ リンクをコピーしました',
+    't-weight-title':'重み設定','t-weight-desc':'各参加者の当選確率を調整。数字が大きいほど当選しやすくなります。',
+    't-weight-tip':'💡 全員1のとき均等抽選','secret-badge-text':'SECRET',
+    'easter-title':'隠しコマンドを発見！','easter-sub':'↑↑↓↓←→←→BA — おめでとう！','easter-close-btn':'閉じる',
+    't2-members':'メンバーリスト','t2-hint':'改行区切りで入力','t2-load-sample':'サンプル','t2-clear':'クリア',
+    't2-count-lbl':'メンバー数','t2-settings':'チーム設定','t2-mode-lbl':'分け方',
+    't2-opt-bycount':'チーム数で分ける','t2-opt-bysize':'人数で分ける',
+    't2-num-lbl':'数','t2-num-sub':'チーム数 または 1チームの人数',
+    't2-shuffle-lbl':'シャッフル','t2-shuffle-sub':'メンバーをランダムに並べる',
+    't2-balance-lbl':'人数均等化','t2-balance-sub':'できるだけ同じ人数にする',
+    't2-draw-btn':'👥　チームを分ける','t2-result':'結果',
+    't3-members':'メンバーリスト','t3-load-sample':'サンプル','t3-clear':'クリア','t3-settings':'設定',
+    't3-reverse-lbl':'逆順も生成','t3-reverse-sub':'後ろから数えた順番も表示',
+    't3-draw-btn':'🔀　順番をシャッフル','t3-result':'順番',
+    't4-preset-lbl':'クイックプリセット','t4-custom-lbl':'カスタム時間',
+    't4-h':'時間','t4-m':'分','t4-s':'秒',
+    't4-sound-lbl':'サウンド・通知','t4-beep-lbl':'終了ブザー','t4-beep-sub':'時間切れ時に音を鳴らす',
+    't4-vol-lbl':'ブザー音量',
+    't4-lap-lbl':'ラップ記録','t4-lap-sub':'ラップタイムを記録する',
+    't5-coin':'コイントス','t5-coin-btn':'コインを投げる',
+    't5-dice':'サイコロ','t5-dice-count':'個数:','t5-dice-btn':'サイコロを振る',
+    't5-num':'乱数生成','t5-num-btn':'数を生成する',
+    't5-picker':'ランダムピッカー','t5-picker-btn':'ランダムに選ぶ',
+    't6-template':'テンプレート','t6-add':'アイテムを追加','t6-add-btn':'追加',
+    't6-check-all':'すべてチェック','t6-uncheck-all':'全解除','t6-clear':'リストをクリア',
+    't6-list':'チェックリスト',
+    'coin-omote':'表','coin-ura':'裏',
+    'toast-weight':'🔓 隠し機能：重み設定を解放！',
+    'qs-label':'🎰 スロット抽選','qs-exit-btn':'← 戻る','qs-spin-btn':'🎲 回す',
+    'team-label':(i)=>`チーム ${i+1}`,
+    'timer-countdown':'カウントダウン','timer-stopwatch':'ストップウォッチ',
+    'timer-start':'▶ スタート','timer-pause':'⏸ 一時停止',
+    'timer-switch-sw':'⇄ ストップウォッチ','timer-switch-cd':'⇄ カウントダウン',
+    'timer-finished':'⏰ 終了！',
+    'tmpl-travel':'🧳 旅行準備','tmpl-shopping':'🛒 買い物リスト','tmpl-meeting':'📋 会議準備',
+    'tmpl-move':'🏠 引越しチェック','tmpl-camping':'⛺ キャンプ装備',
+    'tmpl-items':{
+      'travel':['パスポート','財布','充電器','着替え','常備薬','ヘアドライヤー','傘','カメラ'],
+      'shopping':['牛乳','卵','野菜','肉','パン','調味料','洗剤','シャンプー'],
+      'meeting':['資料の準備','プロジェクター確認','議事録用紙','ペン','水分補給'],
+      'move':['荷造り完了','電気・ガス・水道の手続き','住所変更','引越し業者手配','新居の清掃'],
+      'camping':['テント','寝袋','ランタン','虫除けスプレー','食材','焚き火道具','救急キット','地図'],
+    },
+    'order-result-title':'順番リスト',
+    'timer-stop-sound':'⏹ 音を止める',
+  },
+  en: {
+    'logo-text':'Lottery / Draw Tool',
+    'tbn-lottery':'Lottery','tbn-team':'Teams','tbn-order':'Order',
+    'tbn-timer':'Timer','tbn-random':'Coin & Dice','tbn-checklist':'Checklist',
+    't-entries':'Participants','hint-text':'One name per line',
+    'btn-load-sample':'Sample','btn-clear-entries':'Clear',
+    'btn-sort-entries':'Sort','btn-dedup-entries':'Dedup',
+    't-count':'Total','t-settings':'Settings',
+    't-num-draw':'Winners','t-num-draw-sub':'How many to pick',
+    't-no-duplicate':'No Duplicates','t-no-duplicate-sub':"Won't repeat same person",
+    't-exclude-prev':'Exclude Past Winners','t-exclude-prev-sub':'Remove from history',
+    't-confetti':'Confetti Effect','t-confetti-sub':'Animation on win',
+    't-draw-btn':'🎲  Start Draw','t-reset-btn':'🔄  Reset',
+    't-idle':'Enter participants and start the draw','t-spinning':'Drawing...',
+    't-history':'Draw History','btn-clear-history':'Clear History',
+    't-no-history':'No draw history yet',
+    'sample-entries':'Alice\nBob\nCharlie\nDiana\nEvan\nFiona\nGeorge\nHannah\nIvan\nJulia',
+    'draw-btn-spinning':'🎲  Drawing...','draw-error-empty':'Please enter participants',
+    'draw-error-few':'Not enough participants','draw-error-all-drawn':'All participants won. Reset or disable "Exclude Past Winners".',
+    'result-badge':(w,t)=>`${w} winner${w>1?'s':''} / ${t} total`,
+    'modal-title':'🔗 Create Share Link','modal-desc':'Choose what to include in the link.',
+    'sl-entries':'Participants','sl-entries-sub':'Share the names',
+    'sl-settings':'Settings','sl-settings-sub':'Share winner count & options',
+    'sl-lang':'Language','sl-lang-sub':'Share language setting',
+    'btn-gen-url':'Generate URL','t-copy':'Copy','t-copied':'Copied!',
+    'toast-copied':'✓ Link copied to clipboard',
+    't-weight-title':'Weight Settings','t-weight-desc':'Adjust win probability. Higher = more likely.',
+    't-weight-tip':'💡 All 1s = equal probability','secret-badge-text':'SECRET',
+    'easter-title':'Secret Code Found!','easter-sub':'↑↑↓↓←→←→BA — Congratulations!','easter-close-btn':'Close',
+    't2-members':'Member List','t2-hint':'One name per line','t2-load-sample':'Sample','t2-clear':'Clear',
+    't2-count-lbl':'Members','t2-settings':'Team Settings','t2-mode-lbl':'Split by',
+    't2-opt-bycount':'Number of teams','t2-opt-bysize':'People per team',
+    't2-num-lbl':'Count','t2-num-sub':'# of teams or size of each team',
+    't2-shuffle-lbl':'Shuffle','t2-shuffle-sub':'Randomize member order',
+    't2-balance-lbl':'Balance size','t2-balance-sub':'Make teams equal size',
+    't2-draw-btn':'👥  Divide Teams','t2-result':'Result',
+    't3-members':'Member List','t3-load-sample':'Sample','t3-clear':'Clear','t3-settings':'Settings',
+    't3-reverse-lbl':'Include reverse','t3-reverse-sub':'Also show reversed order',
+    't3-draw-btn':'🔀  Shuffle Order','t3-result':'Order',
+    't4-preset-lbl':'Quick Presets','t4-custom-lbl':'Custom Time',
+    't4-h':'hr','t4-m':'min','t4-s':'sec',
+    't4-sound-lbl':'Sound & Notifications','t4-beep-lbl':'Buzzer','t4-beep-sub':'Sound when timer ends',
+    't4-vol-lbl':'Volume',
+    't4-lap-lbl':'Lap Record','t4-lap-sub':'Record lap times',
+    't5-coin':'Coin Toss','t5-coin-btn':'Toss Coin',
+    't5-dice':'Dice','t5-dice-count':'Count:','t5-dice-btn':'Roll Dice',
+    't5-num':'Random Number','t5-num-btn':'Generate',
+    't5-picker':'Random Picker','t5-picker-btn':'Pick Random',
+    't6-template':'Templates','t6-add':'Add Item','t6-add-btn':'Add',
+    't6-check-all':'Check All','t6-uncheck-all':'Uncheck All','t6-clear':'Clear List',
+    't6-list':'Checklist',
+    'coin-omote':'Heads','coin-ura':'Tails',
+    'toast-weight':'🔓 Secret: Weight editor unlocked!',
+    'qs-label':'🎰 Slot Draw','qs-exit-btn':'← Back','qs-spin-btn':'🎲 SPIN',
+    'team-label':(i)=>`Team ${i+1}`,
+    'timer-countdown':'Countdown','timer-stopwatch':'Stopwatch',
+    'timer-start':'▶ Start','timer-pause':'⏸ Pause',
+    'timer-switch-sw':'⇄ Stopwatch','timer-switch-cd':'⇄ Countdown',
+    'timer-finished':'⏰ Time\'s up!',
+    'tmpl-travel':'🧳 Travel Prep','tmpl-shopping':'🛒 Shopping List','tmpl-meeting':'📋 Meeting Prep',
+    'tmpl-move':'🏠 Moving Checklist','tmpl-camping':'⛺ Camping Gear',
+    'tmpl-items':{
+      'travel':['Passport','Wallet','Charger','Clothes','Medicine','Hairdryer','Umbrella','Camera'],
+      'shopping':['Milk','Eggs','Vegetables','Meat','Bread','Condiments','Detergent','Shampoo'],
+      'meeting':['Prepare materials','Check projector','Meeting notes','Pens','Water'],
+      'move':['Packing done','Utilities transfer','Address change','Book movers','Clean new home'],
+      'camping':['Tent','Sleeping bag','Lantern','Bug spray','Food','Fire tools','First aid','Map'],
+    },
+    'order-result-title':'Order List',
+    'timer-stop-sound':'⏹ Stop Sound',
+  }
+};
+function tr(k){const v=i18n[lang][k];return typeof v==='function'?v:v||k;}
+
+function applyLang(){
+  document.querySelector('html').lang=lang==='ja'?'ja':'en';
+  document.querySelectorAll('.pill-btn').forEach(b=>{b.classList.toggle('active',b.textContent.trim()===(lang==='ja'?'日本語':'English'));});
+  const keys=['logo-text','tbn-lottery','tbn-team','tbn-order','tbn-timer','tbn-random','tbn-checklist',
+    't-entries','hint-text','btn-load-sample','btn-clear-entries','btn-sort-entries','btn-dedup-entries',
+    't-count','t-settings','t-num-draw','t-num-draw-sub','t-no-duplicate','t-no-duplicate-sub',
+    't-exclude-prev','t-exclude-prev-sub','t-confetti','t-confetti-sub','t-history','btn-clear-history',
+    't-no-history','t-spinning','modal-title','modal-desc','sl-entries','sl-entries-sub','sl-settings',
+    'sl-settings-sub','sl-lang','sl-lang-sub','btn-gen-url','t-weight-title','t-weight-desc','t-weight-tip',
+    'secret-badge-text','easter-title','easter-sub','easter-close-btn',
+    't2-members','t2-hint','t2-load-sample','t2-clear','t2-count-lbl','t2-settings','t2-mode-lbl',
+    't2-opt-bycount','t2-opt-bysize','t2-num-lbl','t2-num-sub','t2-shuffle-lbl','t2-shuffle-sub',
+    't2-balance-lbl','t2-balance-sub','t2-draw-btn','t2-result',
+    't3-members','t3-load-sample','t3-clear','t3-settings','t3-reverse-lbl','t3-reverse-sub',
+    't3-draw-btn','t3-result',
+    't4-preset-lbl','t4-custom-lbl','t4-h','t4-m','t4-s',
+    't4-sound-lbl','t4-beep-lbl','t4-beep-sub','t4-vol-lbl','t4-lap-lbl','t4-lap-sub',
+    't5-coin','t5-coin-btn','t5-dice','t5-dice-count','t5-dice-btn',
+    't5-num','t5-num-btn','t5-picker','t5-picker-btn',
+    't6-template','t6-add','t6-add-btn','t6-check-all','t6-uncheck-all','t6-clear','t6-list',
+  ];
+  keys.forEach(k=>{const el=document.getElementById(k);if(el){const v=tr(k);if(typeof v==='string')el.textContent=v;}});
+  document.getElementById('t-draw-btn').textContent=tr('t-draw-btn');
+  document.getElementById('t-reset-btn').textContent=tr('t-reset-btn');
+  document.getElementById('entries-input').placeholder=tr('sample-entries');
+  const cb=document.getElementById('copy-btn');if(cb)cb.textContent=tr('t-copy');
+  document.getElementById('timer-start-btn').textContent=timerRunning?tr('timer-pause'):tr('timer-start');
+  document.getElementById('timer-mode-btn').textContent=timerMode==='countdown'?tr('timer-switch-sw'):tr('timer-switch-cd');
+  document.getElementById('timer-mode-label').textContent=timerMode==='countdown'?tr('timer-countdown'):tr('timer-stopwatch');
+  document.getElementById('timer-stop-sound-btn').textContent=tr('timer-stop-sound');
+  buildChecklistTemplates();
+  renderHistory();
+  if(document.getElementById('weight-panel').classList.contains('open'))buildWeightRows();
+}
+function setLang(l){lang=l;applyLang();}
+
+/* =====================================================
+   THEME
+   ===================================================== */
+function toggleTheme(){
+  theme=theme==='dark'?'light':'dark';
+  document.documentElement.setAttribute('data-theme',theme);
+  document.getElementById('theme-btn').textContent=theme==='dark'?'🌙':'☀️';
+}
+
+/* =====================================================
+   TABS
+   ===================================================== */
+function switchTab(name){
+  document.querySelectorAll('.tab-page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  document.getElementById('tab-btn-'+name).classList.add('active');
+  if(name==='checklist')renderChecklist();
+}
+
+/* =====================================================
+   UTILITIES
+   ===================================================== */
+function shuffle(arr){const a=[...arr];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2600);}
+function openModal(id){document.getElementById(id).classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+function launchConfetti(n){
+  n=n||80;const c=document.getElementById('confetti');c.innerHTML='';
+  const cols=['#f7c948','#e8a020','#7c6fff','#e05c5c','#4caf7d','#ffffff','#ff6eb4','#5b8dee'];
+  const sh=['◆','●','▲','■','★'];
+  for(let i=0;i<n;i++){const p=document.createElement('div');p.className='confetti-piece';
+    p.textContent=sh[Math.floor(Math.random()*sh.length)];
+    p.style.cssText=`left:${Math.random()*100}%;top:-20px;color:${cols[Math.floor(Math.random()*cols.length)]};font-size:${8+Math.random()*10}px;animation-duration:${1.2+Math.random()*1.6}s;animation-delay:${Math.random()*0.8}s;`;
+    c.appendChild(p);}
+  setTimeout(()=>{c.innerHTML='';},3800);
+}
+
+/* =====================================================
+   TAB1: LOTTERY
+   ===================================================== */
+function getEntries(){return document.getElementById('entries-input').value.split('\n').map(s=>s.trim()).filter(s=>s.length>0);}
+function updateCount(){
+  const e=getEntries();document.getElementById('count-num').textContent=e.length;
+  const excl=document.getElementById('exclude-prev').checked;
+  if(excl&&allWinners.size>0){const pct=Math.min(100,Math.round(allWinners.size/(e.length||1)*100));document.getElementById('progress-wrap').style.display='block';document.getElementById('progress-bar').style.width=pct+'%';}
+  else{document.getElementById('progress-wrap').style.display='none';}
+}
+function loadSample(){document.getElementById('entries-input').value=tr('sample-entries');updateCount();buildWeightRows();}
+function clearEntries(){document.getElementById('entries-input').value='';weights={};updateCount();buildWeightRows();}
+function sortEntries(){const e=getEntries().sort((a,b)=>a.localeCompare(b,lang==='ja'?'ja':'en'));document.getElementById('entries-input').value=e.join('\n');updateCount();}
+function dedupEntries(){const e=[...new Set(getEntries())];document.getElementById('entries-input').value=e.join('\n');updateCount();showToast(lang==='ja'?'重複を削除しました':'Duplicates removed');}
+function weightedSample(pool,n,noDup){
+  const useW=document.getElementById('weight-panel').classList.contains('open');
+  if(!useW){return noDup?shuffle(pool).slice(0,n):Array.from({length:n},()=>pool[Math.floor(Math.random()*pool.length)]);}
+  const winners=[];const remaining=[...pool];
+  for(let i=0;i<n&&remaining.length>0;i++){
+    const tot=remaining.reduce((s,e)=>s+(parseFloat(weights[e])||1),0);
+    let r=Math.random()*tot,chosen=remaining[remaining.length-1];
+    for(let j=0;j<remaining.length;j++){r-=(parseFloat(weights[remaining[j]])||1);if(r<=0){chosen=remaining[j];break;}}
+    winners.push(chosen);if(noDup)remaining.splice(remaining.indexOf(chosen),1);
+  }
+  return winners;
+}
+function drawLottery(){
+  const entries=getEntries(),numDraw=Math.max(1,parseInt(document.getElementById('num-draw').value)||1);
+  const noDup=document.getElementById('no-duplicate').checked,excl=document.getElementById('exclude-prev').checked;
+  if(entries.length===0){alert(tr('draw-error-empty'));return;}
+  let pool=excl?entries.filter(e=>!allWinners.has(e)):[...entries];
+  if(excl&&pool.length===0){alert(tr('draw-error-all-drawn'));return;}
+  if(noDup&&pool.length<numDraw){alert(tr('draw-error-few'));return;}
+  const btn=document.getElementById('draw-btn');btn.disabled=true;
+  document.getElementById('t-draw-btn').textContent=tr('draw-btn-spinning');
+  showStage('spinning');
+  setTimeout(()=>{
+    const winners=weightedSample(pool,numDraw,noDup);
+    showResult(winners,entries.length);addHistory(winners);
+    winners.forEach(w=>allWinners.add(w));updateCount();
+    if(document.getElementById('show-confetti').checked)launchConfetti();
+    btn.disabled=false;document.getElementById('t-draw-btn').textContent=tr('t-draw-btn');drawCount++;
+  },1200+Math.random()*600);
+}
+function showStage(m){
+  document.getElementById('stage-idle').style.display=m==='idle'?'flex':'none';
+  document.getElementById('stage-spinning').style.display=m==='spinning'?'flex':'none';
+  document.getElementById('stage-result').style.display=m==='result'?'flex':'none';
+}
+function showResult(winners,total){
+  showStage('result');document.getElementById('result-badge').textContent=tr('result-badge')(winners.length,total);
+  if(winners.length===1){document.getElementById('result-winner').style.display='block';document.getElementById('result-winner').textContent=winners[0];document.getElementById('result-multi').style.display='none';}
+  else{document.getElementById('result-winner').style.display='none';const m=document.getElementById('result-multi');m.style.display='flex';m.innerHTML='';winners.forEach((w,i)=>{const t=document.createElement('div');t.className='result-tag';t.textContent=w;t.style.animationDelay=(i*.1)+'s';m.appendChild(t);});}
+}
+function addHistory(winners){
+  const now=new Date();const ts=`${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
+  drawHistory.unshift({winners,time:ts,num:drawCount+1});renderHistory();
+}
+function renderHistory(){
+  const list=document.getElementById('history-list');
+  if(drawHistory.length===0){list.innerHTML=`<div class="no-history">${tr('t-no-history')}</div>`;return;}
+  list.innerHTML=drawHistory.map((item,i)=>`<div class="history-item" style="animation-delay:${i*.04}s"><span class="history-num">#${item.num}</span><span class="history-names">${item.winners.join('，')}</span><span class="history-time">${item.time}</span></div>`).join('');
+}
+function clearHistory(){drawHistory=[];allWinners=new Set();drawCount=0;renderHistory();updateCount();showStage('idle');}
+function resetAll(){clearHistory();document.getElementById('entries-input').value='';weights={};updateCount();buildWeightRows();showStage('idle');}
+
+/* =====================================================
+   TAB2: TEAMS
+   ===================================================== */
+function getTeamMembers(){return document.getElementById('team-input').value.split('\n').map(s=>s.trim()).filter(s=>s.length>0);}
+function updateTeamCount(){document.getElementById('team-count-num').textContent=getTeamMembers().length;}
+document.getElementById('team-input').addEventListener('input',updateTeamCount);
+function loadTeamSample(){document.getElementById('team-input').value=tr('sample-entries');updateTeamCount();}
+function divideTeams(){
+  let members=getTeamMembers();if(members.length===0){alert(lang==='ja'?'メンバーを入力してください':'Please enter members');return;}
+  if(document.getElementById('team-shuffle').checked)members=shuffle(members);
+  const num=parseInt(document.getElementById('team-num').value)||2;
+  const mode=document.getElementById('team-mode').value;
+  let teams=[];
+  if(mode==='bycount'){
+    const count=Math.min(num,members.length);
+    for(let i=0;i<count;i++)teams.push([]);
+    members.forEach((m,i)=>teams[i%count].push(m));
+    if(document.getElementById('team-balance').checked){
+      // distribute evenly
+      teams=[];for(let i=0;i<count;i++)teams.push([]);
+      const base=Math.floor(members.length/count),extra=members.length%count;
+      let idx=0;for(let i=0;i<count;i++){const sz=base+(i<extra?1:0);teams[i]=members.slice(idx,idx+sz);idx+=sz;}
+    }
+  } else {
+    const size=Math.max(1,num);for(let i=0;i<members.length;i+=size)teams.push(members.slice(i,i+size));
+  }
+  const area=document.getElementById('team-result-area');
+  const grid=document.createElement('div');grid.className='team-result-grid';
+  grid.style.gridTemplateColumns=teams.length<=2?'1fr 1fr':teams.length<=4?'1fr 1fr':'1fr 1fr 1fr';
+  teams.forEach((team,i)=>{
+    const card=document.createElement('div');card.className='team-card';
+    const h=document.createElement('div');h.className='team-card-header';
+    const dot=document.createElement('div');dot.className='team-dot';dot.style.background=COLORS[i%COLORS.length];
+    h.appendChild(dot);h.appendChild(document.createTextNode(tr('team-label')(i)));
+    const mem=document.createElement('div');mem.className='team-members';
+    team.forEach(m=>{const tag=document.createElement('span');tag.className='team-member-tag';tag.textContent=m;mem.appendChild(tag);});
+    card.appendChild(h);card.appendChild(mem);grid.appendChild(card);
+  });
+  area.innerHTML='';area.appendChild(grid);
+  if(document.getElementById('show-confetti').checked)launchConfetti(50);
+}
+
+/* =====================================================
+   TAB3: ORDER
+   ===================================================== */
+function getOrderMembers(){return document.getElementById('order-input').value.split('\n').map(s=>s.trim()).filter(s=>s.length>0);}
+function loadOrderSample(){document.getElementById('order-input').value=tr('sample-entries');}
+function shuffleOrder(){
+  const members=getOrderMembers();if(members.length===0){alert(lang==='ja'?'メンバーを入力してください':'Please enter members');return;}
+  const shuffled=shuffle(members);
+  const area=document.getElementById('order-result-area');area.innerHTML='';
+  const list=document.createElement('div');list.className='order-list';
+  shuffled.forEach((m,i)=>{
+    const item=document.createElement('div');item.className='order-item';item.style.animationDelay=(i*.05)+'s';
+    const rank=document.createElement('div');rank.className='order-rank'+(i===0?' gold':i===1?' silver':i===2?' bronze':'');
+    rank.textContent=i+1+'位';
+    const name=document.createElement('div');name.className='order-name';name.textContent=m;
+    item.appendChild(rank);item.appendChild(name);list.appendChild(item);
+  });
+  area.appendChild(list);
+  if(document.getElementById('order-reverse').checked){
+    const sep=document.createElement('div');sep.style.cssText='font-size:11px;color:var(--text3);text-align:center;margin:12px 0 4px;';sep.textContent=lang==='ja'?'▼ 逆順':'▼ Reversed';area.appendChild(sep);
+    const rlist=document.createElement('div');rlist.className='order-list';
+    [...shuffled].reverse().forEach((m,i)=>{
+      const item=document.createElement('div');item.className='order-item';item.style.animationDelay=((shuffled.length+i)*.05)+'s';
+      const rank=document.createElement('div');rank.className='order-rank';rank.textContent=shuffled.length-i+'位';
+      const name=document.createElement('div');name.className='order-name';name.textContent=m;
+      item.appendChild(rank);item.appendChild(name);rlist.appendChild(item);
+    });
+    area.appendChild(rlist);
+  }
+}
+
+/* =====================================================
+   TAB4: TIMER
+   ===================================================== */
+function fmtTime(s){const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sec=s%60;return h>0?`${h}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`:`${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;}
+function fmtMs(ms){const s=Math.floor(ms/1000),cs=Math.floor((ms%1000)/10);return fmtTime(s)+'.'+String(cs).padStart(2,'0');}
+function updateVolumeLabel() {
+  const vol = document.getElementById('timer-volume').value;
+  document.getElementById('vol-pct').textContent = Math.round(vol * 100) + '%';
+}
+function setTimerPreset(secs){
+  timerReset();
+  document.getElementById('timer-h').value=Math.floor(secs/3600);
+  document.getElementById('timer-m').value=Math.floor((secs%3600)/60);
+  document.getElementById('timer-s').value=secs%60;
+  timerRemaining=secs;timerTotal=secs;
+  document.getElementById('timer-display-clock').textContent=fmtTime(secs);
+  document.getElementById('timer-progress-bar').style.width='100%';
+  document.querySelectorAll('.preset-btn').forEach(b=>{b.classList.remove('active');if(parseInt(b.textContent)===secs/60||b.onclick.toString().includes(secs))b.classList.toggle('active');});
+}
+function timerToggle(){
+  if(timerMode==='countdown'){
+    if(!timerRunning){
+      const h=parseInt(document.getElementById('timer-h').value)||0;
+      const m=parseInt(document.getElementById('timer-m').value)||0;
+      const s=parseInt(document.getElementById('timer-s').value)||0;
+      const total=h*3600+m*60+s;
+      if(timerRemaining===0||timerRemaining===timerTotal){timerRemaining=total;timerTotal=total;}
+      if(timerRemaining<=0)return;
+      stopBuzzer(); // 開始時に前回の音があれば止める
+      timerRunning=true;
+      document.getElementById('timer-start-btn').textContent=tr('timer-pause');
+      timerInterval=setInterval(()=>{
+        timerRemaining--;
+        document.getElementById('timer-display-clock').textContent=fmtTime(timerRemaining);
+        const pct=timerTotal>0?timerRemaining/timerTotal*100:0;
+        const bar=document.getElementById('timer-progress-bar');bar.style.width=pct+'%';
+        bar.style.background=timerRemaining<=10?'var(--red)':timerRemaining<=30?'var(--accent2)':'var(--accent)';
+        document.getElementById('timer-display-clock').className='timer-clock'+(timerRunning?' running':'')+(timerRemaining<=10?' urgent':'');
+        if(timerRemaining<=0){
+          clearInterval(timerInterval);
+          timerRunning=false;
+          document.getElementById('timer-display-clock').textContent=tr('timer-finished');
+          document.getElementById('timer-display-clock').className='timer-clock urgent';
+          document.getElementById('timer-start-btn').textContent=tr('timer-start');
+          if(document.getElementById('timer-beep').checked)startBuzzerLoop();
+        }
+      },1000);
+    } else {
+      clearInterval(timerInterval);
+      timerRunning=false;
+      document.getElementById('timer-display-clock').className='timer-clock';
+      document.getElementById('timer-start-btn').textContent=tr('timer-start');
+    }
+  } else {
+    if(!timerRunning){timerRunning=true;stopwatchStart=Date.now()-stopwatchMs;document.getElementById('timer-start-btn').textContent=tr('timer-pause');timerInterval=setInterval(()=>{stopwatchMs=Date.now()-stopwatchStart;document.getElementById('timer-display-clock').textContent=fmtMs(stopwatchMs);},50);}
+    else{clearInterval(timerInterval);timerRunning=false;document.getElementById('timer-start-btn').textContent=tr('timer-start');}
+  }
+}
+function timerReset(){
+  clearInterval(timerInterval);timerRunning=false;
+  stopBuzzer();
+  document.getElementById('timer-start-btn').textContent=tr('timer-start');
+  document.getElementById('timer-display-clock').className='timer-clock';
+  if(timerMode==='countdown'){
+    const h=parseInt(document.getElementById('timer-h').value)||0;
+    const m=parseInt(document.getElementById('timer-m').value)||0;
+    const s=parseInt(document.getElementById('timer-s').value)||0;
+    const total=h*3600+m*60+s;timerRemaining=total;timerTotal=total;
+    document.getElementById('timer-display-clock').textContent=fmtTime(total);
+    document.getElementById('timer-progress-bar').style.width='100%';
+    document.getElementById('timer-progress-bar').style.background='var(--accent)';
+  } else {stopwatchMs=0;document.getElementById('timer-display-clock').textContent='00:00.00';}
+  lapLog=[];document.getElementById('buzzer-log').innerHTML='';
+}
+function timerLap(){
+  if(!timerRunning&&timerMode==='stopwatch')return;
+  const t=timerMode==='countdown'?fmtTime(timerRemaining):fmtMs(stopwatchMs);
+  lapLog.push(t);
+  const log=document.getElementById('buzzer-log');
+  const item=document.createElement('div');item.className='buzzer-item';
+  item.textContent=`Lap ${lapLog.length}: ${t}`;
+  log.insertBefore(item,log.firstChild);
+}
+function switchTimerMode(){
+  timerReset();
+  timerMode=timerMode==='countdown'?'stopwatch':'countdown';
+  document.getElementById('timer-mode-label').textContent=timerMode==='countdown'?tr('timer-countdown'):tr('timer-stopwatch');
+  document.getElementById('timer-mode-btn').textContent=timerMode==='countdown'?tr('timer-switch-sw'):tr('timer-switch-cd');
+  document.getElementById('timer-display-clock').textContent=timerMode==='countdown'?fmtTime(timerRemaining):'00:00.00';
+}
+function startBuzzerLoop() {
+  stopBuzzer();
+  document.getElementById('timer-stop-sound-btn').style.display = 'block'; // 停止ボタンを表示
+  
+  // 1回鳴らす
+  playBuzzerSound();
+  
+  // 1.5秒周期でループ再生
+  buzzerInterval = setInterval(() => {
+    playBuzzerSound();
+  }, 1500);
+
+  const log = document.getElementById('buzzer-log');
+  const item = document.createElement('div');
+  item.className = 'buzzer-item';
+  item.textContent = '🔔 ' + (lang === 'ja' ? 'タイマー終了' : 'Timer finished') + ' — ' + new Date().toLocaleTimeString();
+  log.insertBefore(item, log.firstChild);
+}
+function playBuzzerSound() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const volume = parseFloat(document.getElementById('timer-volume').value);
+    
+    [440, 550, 660, 440].forEach((f, i) => {
+      const osc = ctx.createOscillator(), g = ctx.createGain();
+      osc.connect(g);g.connect(ctx.destination);
+      osc.frequency.value = f;
+      g.gain.setValueAtTime(volume, ctx.currentTime + i * 0.25);
+      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.25 + 0.22);
+      osc.start(ctx.currentTime + i * 0.25);
+      osc.stop(ctx.currentTime + i * 0.25 + 0.25);
+    });
+  } catch (e) {}
+}
+function stopBuzzer() {
+  if (buzzerInterval) {
+    clearInterval(buzzerInterval);
+    buzzerInterval = null;
+  }
+  document.getElementById('timer-stop-sound-btn').style.display = 'none'; // 停止ボタンを非表示
+}
+
+/* =====================================================
+   TAB5: COIN / DICE / RANDOM
+   ===================================================== */
+function tossCoin(){
+  const d=document.getElementById('coin-display');let frames=0;
+  const faces=['🪙','⚪'];const interval=setInterval(()=>{d.textContent=faces[frames%2];frames++;},80);
+  setTimeout(()=>{
+    clearInterval(interval);
+    const heads=Math.random()<.5;d.textContent=heads?'🌕':'🌑';
+    const res=heads?tr('coin-omote'):tr('coin-ura');
+    document.getElementById('coin-result').textContent=res;
+    coinHistory.unshift(res);if(coinHistory.length>12)coinHistory.pop();
+    const h=document.getElementById('coin-history');
+    h.innerHTML=coinHistory.map(r=>`<span class="rand-chip">${r}</span>`).join('');
+  },800);
+}
+function rollDice(){
+  const count=Math.min(6,parseInt(document.getElementById('dice-count').value)||1);
+  const faces=parseInt(document.getElementById('dice-faces').value)||6;
+  const container=document.getElementById('dice-displays');container.innerHTML='';
+  const results=[];let frames=0;
+  const interval=setInterval(()=>{
+    container.innerHTML='';
+    for(let i=0;i<count;i++){const sp=document.createElement('span');sp.style.cssText='font-size:40px;transition:transform .1s;';sp.textContent=DICE_EMOJI[faces]||'🎲';container.appendChild(sp);}
+    frames++;
+  },80);
+  setTimeout(()=>{
+    clearInterval(interval);container.innerHTML='';
+    for(let i=0;i<count;i++){results.push(Math.floor(Math.random()*faces)+1);}
+    results.forEach(r=>{const s=document.createElement('span');s.style.cssText='font-family:"Space Mono",monospace;font-size:32px;font-weight:700;color:var(--accent);min-width:40px;text-align:center;';s.textContent=r;container.appendChild(s);});
+    const sum=results.reduce((a,b)=>a+b,0);
+    document.getElementById('dice-result').textContent=count>1?(lang==='ja'?`合計: ${sum}`:`Total: ${sum}`):'';
+    diceHistoryLog.unshift(results.join('+')+(count>1?`=${sum}`:''));if(diceHistoryLog.length>10)diceHistoryLog.pop();
+    document.getElementById('dice-history').innerHTML=diceHistoryLog.map(r=>`<span class="rand-chip">${r}</span>`).join('');
+  },900);
+}
+function generateRandNum(){
+  const mn=parseInt(document.getElementById('rand-min').value)||1;
+  const mx=parseInt(document.getElementById('rand-max').value)||100;
+  if(mn>mx){alert(lang==='ja'?'最小値を最大値以下にしてください':'Min must be ≤ Max');return;}
+  const r=document.getElementById('rand-num-result');r.style.animation='none';r.offsetHeight;r.style.animation='winnerPop .3s cubic-bezier(.34,1.56,.64,1) both';
+  const val=Math.floor(Math.random()*(mx-mn+1))+mn;
+  r.textContent=val.toLocaleString();r.style.opacity='1';
+  randHistory.unshift(String(val));if(randHistory.length>10)randHistory.pop();
+  document.getElementById('rand-history').innerHTML=randHistory.map(v=>`<span class="rand-chip">${v}</span>`).join('');
+}
+function runPicker(){
+  const items=document.getElementById('picker-input').value.split('\n').map(s=>s.trim()).filter(s=>s.length>0);
+  if(items.length===0){alert(lang==='ja'?'項目を入力してください':'Please enter items');return;}
+  const res=document.getElementById('picker-result');let frames=0;
+  const interval=setInterval(()=>{res.textContent='→ '+items[Math.floor(Math.random()*items.length)];frames++;},80);
+  setTimeout(()=>{clearInterval(interval);res.textContent='→ '+items[Math.floor(Math.random()*items.length)];if(document.getElementById('show-confetti').checked)launchConfetti(40);},900);
+}
+// init dice displays
+(function(){const c=document.getElementById('dice-displays');const s=document.createElement('span');s.style.cssText='font-size:44px;';s.textContent='🎲';c.appendChild(s);})();
+
+/* =====================================================
+   TAB6: CHECKLIST
+   ===================================================== */
+function buildChecklistTemplates(){
+  const c=document.getElementById('checklist-templates');c.innerHTML='';
+  const keys=['travel','shopping','meeting','move','camping'];
+  const lk=['tmpl-travel','tmpl-shopping','tmpl-meeting','tmpl-move','tmpl-camping'];
+  keys.forEach((k,i)=>{
+    const btn=document.createElement('button');btn.className='tmpl-btn';btn.textContent=tr(lk[i]);
+    btn.onclick=()=>loadTemplate(k);c.appendChild(btn);
+  });
+}
+function loadTemplate(key){
+  const items=tr('tmpl-items')[key]||[];
+  checkItems=[...items.map(t=>({text:t,done:false,id:Date.now()+Math.random()}))];
+  renderChecklist();
+}
+function addCheckItem(){
+  const inp=document.getElementById('check-new-input');const val=inp.value.trim();
+  if(!val)return;
+  checkItems.push({text:val,done:false,id:Date.now()+Math.random()});
+  inp.value='';renderChecklist();
+}
+function toggleCheckItem(id){const item=checkItems.find(i=>i.id===id);if(item)item.done=!item.done;renderChecklist();}
+function deleteCheckItem(id){checkItems=checkItems.filter(i=>i.id!==id);renderChecklist();}
+function checkAll(){checkItems.forEach(i=>i.done=true);renderChecklist();}
+function uncheckAll(){checkItems.forEach(i=>i.done=false);renderChecklist();}
+function clearChecklist(){checkItems=[];renderChecklist();}
+function renderChecklist(){
+  const area=document.getElementById('checklist-area');
+  const done=checkItems.filter(i=>i.done).length;
+  const total=checkItems.length;
+  const pct=total>0?Math.round(done/total*100):0;
+  document.getElementById('check-done-count').textContent=done;
+  document.getElementById('check-total-count').textContent=total;
+  document.getElementById('check-pct-text').textContent=pct+'%';
+  document.getElementById('check-prog-bar').style.width=pct+'%';
+  if(checkItems.length===0){area.innerHTML=`<div style="color:var(--text3);font-size:14px;text-align:center;padding:20px 0;">アイテムを追加してください</div>`;return;}
+  area.innerHTML='';
+  checkItems.forEach((item,idx)=>{
+    const el=document.createElement('div');el.className='check-item'+(item.done?' done':'');
+    el.onclick=()=>toggleCheckItem(item.id);
+    el.innerHTML=`<div class="check-box">${item.done?'<svg width="12" height="10" viewBox="0 0 12 10" fill="none"><path d="M1 5L4.5 8.5L11 1" stroke="#0a0a12" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>':''}</div><span class="check-name">${item.text}</span><button class="check-del" onclick="event.stopPropagation();deleteCheckItem(${item.id})">×</button>`;
+    area.appendChild(el);
+  });
+  if(done===total&&total>0&&pct===100){showToast(lang==='ja'?'🎉 全部完了！':'🎉 All done!');}
+}
+
+/* =====================================================
+   SHARE
+   ===================================================== */
+function closeShareModal(e){if(e.target===document.getElementById('share-modal'))closeModal('share-modal');}
+function generateShareUrl(){
+  const p=new URLSearchParams();
+  if(document.getElementById('share-lang').checked)p.set('lang',lang);
+  if(document.getElementById('share-settings').checked){
+    p.set('n',document.getElementById('num-draw').value);
+    p.set('nodup',document.getElementById('no-duplicate').checked?'1':'0');
+    p.set('exprev',document.getElementById('exclude-prev').checked?'1':'0');
+    p.set('confetti',document.getElementById('show-confetti').checked?'1':'0');
+    p.set('theme',theme);
+  }
+  if(document.getElementById('share-entries').checked){
+    const e=getEntries();if(e.length>0)p.set('entries',btoa(unescape(encodeURIComponent(e.join('\n')))));
+  }
+  const base=window.location.href.split('?')[0].split('#')[0];
+  const url=base+(p.toString()?'?'+p.toString():'');
+  document.getElementById('share-url-input').value=url;
+  document.getElementById('url-box').style.display='flex';
+  const cb=document.getElementById('copy-btn');cb.textContent=tr('t-copy');cb.classList.remove('copied');
+}
+function copyShareUrl(){
+  const url=document.getElementById('share-url-input').value;
+  navigator.clipboard.writeText(url).then(()=>{
+    const btn=document.getElementById('copy-btn');btn.textContent=tr('t-copied');btn.classList.add('copied');
+    setTimeout(()=>{btn.textContent=tr('t-copy');btn.classList.remove('copied');},2000);
+    showToast(tr('toast-copied'));closeModal('share-modal');
+  }).catch(()=>document.getElementById('share-url-input').select());
+}
+function loadFromUrl(){
+  const p=new URLSearchParams(window.location.search);
+  if(p.has('lang'))lang=p.get('lang');
+  if(p.has('theme')){theme=p.get('theme');document.documentElement.setAttribute('data-theme',theme);document.getElementById('theme-btn').textContent=theme==='dark'?'🌙':'☀️';}
+  if(p.has('entries')){try{document.getElementById('entries-input').value=decodeURIComponent(escape(atob(p.get('entries'))));}catch(e){}}
+  if(p.has('n'))document.getElementById('num-draw').value=p.get('n');
+  if(p.has('nodup'))document.getElementById('no-duplicate').checked=p.get('nodup')==='1';
+  if(p.has('exprev'))document.getElementById('exclude-prev').checked=p.get('exprev')==='1';
+  if(p.has('confetti'))document.getElementById('show-confetti').checked=p.get('confetti')==='1';
+}
+
+/* =====================================================
+   SECRET FEATURES
+   ==================================================== */
+// Konami Code
+const KONAMI=['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','b','a'];
+let konamiIdx=0;
+document.addEventListener('keydown',e=>{
+  if(e.key===KONAMI[konamiIdx]){konamiIdx++;if(konamiIdx===KONAMI.length){konamiIdx=0;showEaster();}}
+  else{konamiIdx=0;}
+});
+function logoClickSecret(){
+  logoClickCount++;clearTimeout(logoClickTimer);
+  logoClickTimer=setTimeout(()=>{logoClickCount=0;},700);
+  if(logoClickCount>=5){logoClickCount=0;toggleWeightPanel();}
+}
+function showEaster(){
+  document.getElementById('easter-overlay').classList.add('show');
+  document.getElementById('easter-title').textContent=tr('easter-title');
+  document.getElementById('easter-sub').textContent=tr('easter-sub');
+  document.getElementById('easter-close-btn').textContent=tr('easter-close-btn');
+  document.documentElement.setAttribute('data-party','1');
+  setTimeout(()=>document.documentElement.removeAttribute('data-party'),5000);
+  launchConfetti(160);
+}
+function closeEaster(){document.getElementById('easter-overlay').classList.remove('show');}
+
+// Weight Panel
+function toggleWeightPanel(){
+  const p=document.getElementById('weight-panel');p.classList.toggle('open');
+  if(p.classList.contains('open')){buildWeightRows();showToast(tr('toast-weight'));}
+}
+function buildWeightRows(){
+  const entries=getEntries();const list=document.getElementById('weight-list');list.innerHTML='';
+  if(entries.length===0){list.innerHTML=`<div style="font-size:13px;color:var(--text3);padding:8px 0;">${lang==='ja'?'参加者がいません':'No participants'}</div>`;return;}
+  const maxW=Math.max(1,...entries.map(e=>parseFloat(weights[e])||1));
+  entries.forEach(name=>{
+    if(!weights[name])weights[name]=1;
+    const w=parseFloat(weights[name])||1;const pct=Math.min(100,Math.round(w/maxW*100));
+    const row=document.createElement('div');row.className='weight-row';
+    const safeName=name.replace(/'/g,"\\'");
+    row.innerHTML=`<div class="weight-name" title="${name}">${name}</div><div class="weight-bar"><div class="weight-bar-fill" id="wbar-${encodeURIComponent(name)}" style="width:${pct}%"></div></div><input class="weight-input" type="number" min="1" max="99" step="1" value="${w}" oninput="updateWeight('${safeName}',this.value)">`;
+    list.appendChild(row);
+  });
+}
+function updateWeight(name,val){
+  weights[name]=Math.max(1,parseFloat(val)||1);
+  const entries=getEntries();const maxW=Math.max(1,...entries.map(e=>parseFloat(weights[e])||1));
+  entries.forEach(e=>{const bar=document.getElementById('wbar-'+encodeURIComponent(e));if(bar)bar.style.width=Math.round((parseFloat(weights[e])||1)/maxW*100)+'%';});
+}
+
+// Quick Spin (triple-click draw btn)
+let drawBtnClicks=0,drawBtnTimer=null;
+document.getElementById('draw-btn').addEventListener('click',function(){
+  drawBtnClicks++;clearTimeout(drawBtnTimer);
+  drawBtnTimer=setTimeout(()=>{drawBtnClicks=0;},450);
+  if(drawBtnClicks>=3){drawBtnClicks=0;const e=getEntries();if(e.length>0)openQuickSpin(e);}
+},true);
+let qsRunning=false,qsIntervals=[];
+function openQuickSpin(entries){
+  const overlay=document.getElementById('qs-overlay');
+  const container=document.getElementById('slot-container');
+  const numDraw=Math.min(3,Math.max(1,parseInt(document.getElementById('num-draw').value)||1));
+  container.innerHTML='';document.getElementById('qs-winner').textContent='';
+  document.getElementById('qs-label').textContent=tr('qs-label');
+  document.getElementById('qs-exit-btn').textContent=tr('qs-exit-btn');
+  overlay.classList.add('show');
+  const reels=[];
+  for(let i=0;i<numDraw;i++){const reel=document.createElement('div');reel.className='slot-reel';const inner=document.createElement('div');inner.className='slot-reel-inner';reel.appendChild(inner);container.appendChild(reel);reels.push(inner);}
+  const spinBtn=document.createElement('button');spinBtn.className='draw-btn';spinBtn.style.cssText='width:auto;padding:12px 32px;font-size:15px;';spinBtn.textContent=tr('qs-spin-btn');
+  overlay.insertBefore(spinBtn,document.getElementById('qs-winner'));
+  spinBtn.addEventListener('click',()=>{
+    if(qsRunning)return;qsRunning=true;spinBtn.disabled=true;document.getElementById('qs-winner').textContent='';
+    reels.forEach(inner=>{inner.innerHTML='';const items=[...shuffle(entries),...shuffle(entries),...shuffle(entries)];items.forEach(name=>{const item=document.createElement('div');item.className='slot-item';item.textContent=name;inner.appendChild(item);});inner.style.transform='translateY(0)';});
+    let offset=0;const interval=setInterval(()=>{offset+=13;reels.forEach(inner=>{const wrap=offset%(inner.children.length*64);inner.style.transform=`translateY(-${wrap}px)`;});},16);qsIntervals.push(interval);
+    const winners=weightedSample(entries,numDraw,true);
+    setTimeout(()=>{
+      clearInterval(interval);qsIntervals=[];
+      reels.forEach((inner,i)=>{inner.innerHTML='';const el=document.createElement('div');el.className='slot-item';el.textContent=winners[i%winners.length];el.style.color='var(--accent)';inner.appendChild(el);inner.style.transform='translateY(0)';});
+      document.getElementById('qs-winner').textContent='🏆 '+winners.join('，');
+      if(document.getElementById('show-confetti').checked)launchConfetti();
+      addHistory(winners);winners.forEach(w=>allWinners.add(w));updateCount();
+      qsRunning=false;spinBtn.disabled=false;drawCount++;
+    },1800+Math.random()*600);
+  });
+}
+function closeQuickSpin(){
+  qsIntervals.forEach(clearInterval);qsIntervals=[];qsRunning=false;
+  document.getElementById('qs-overlay').classList.remove('show');
+  const sb=document.getElementById('qs-overlay').querySelector('.draw-btn');if(sb)sb.remove();
+}
+
+/* =====================================================
+   INIT
+   ===================================================== */
+loadFromUrl();
+applyLang();
+updateCount();
+showStage('idle');
+buildChecklistTemplates();
+// init timer display
+(function(){const h=parseInt(document.getElementById('timer-h').value)||0,m=parseInt(document.getElementById('timer-m').value)||5,s=parseInt(document.getElementById('timer-s').value)||0;timerRemaining=h*3600+m*60+s;timerTotal=timerRemaining;document.getElementById('timer-display-clock').textContent=fmtTime(timerRemaining);})();
+</script>
 </body>
 </html>
